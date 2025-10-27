@@ -1,5 +1,4 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { useAuth } from '@/hooks/useAuth'
 import {
   LayoutDashboard,
   HardDrive,
@@ -8,7 +7,7 @@ import {
   Box,
   BarChart3,
   RefreshCw,
-  LogOut,
+  User,
   Menu,
   X,
 } from 'lucide-react'
@@ -25,9 +24,11 @@ const navigation = [
 ]
 
 export default function Layout() {
-  const { user, logout } = useAuth()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Prototype mode - mock user
+  const user = { firstName: 'Demo', lastName: 'User', role: 'ADMIN' }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,21 +112,15 @@ export default function Layout() {
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1" />
             <div className="flex items-center gap-x-4 lg:gap-x-6">
-              <div className="hidden lg:block">
-                <div className="text-sm">
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5 text-gray-500" />
+                <div className="hidden lg:block text-sm">
                   <div className="font-medium text-gray-900">
-                    {user?.firstName} {user?.lastName}
+                    {user.firstName} {user.lastName}
                   </div>
-                  <div className="text-gray-500">{user?.role}</div>
+                  <div className="text-gray-500">{user.role}</div>
                 </div>
               </div>
-              <button
-                onClick={logout}
-                className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-              >
-                <LogOut className="h-5 w-5" />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
             </div>
           </div>
         </div>
