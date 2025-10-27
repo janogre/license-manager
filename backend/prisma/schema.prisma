@@ -1,0 +1,297 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USERS & AUTHENTICATION
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole @default(VIEWER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// ============================================
+// HARDWARE MODELS (Master Data / Catalog)
+// ============================================
+
+model HardwareModel {
+  id              String    @id @default(uuid())
+  manufacturer    String    @default("Juniper Networks")
+  modelName       String    @unique // e.g., "MX240", "EX4300-48T"
+  modelType       ModelType
+  description     String?
+  technicalSpecs  Json? // Flexible field for various specs
+  eolDate         DateTime? // End of Life
+  eosDate         DateTime? // End of Support
+  eolAnnouncedAt  DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  assets HardwareAsset[]
+
+  @@map("hardware_models")
+}
+
+enum ModelType {
+  ROUTER
+  SWITCH
+  FIREWALL
+  WIRELESS_AP
+  CONTROLLER
+  OTHER
+}
+
+// ============================================
+// HARDWARE ASSETS (Physical Inventory)
+// ============================================
+
+model HardwareAsset {
+  id              String       @id @default(uuid())
+  modelId         String
+  serialNumber    String       @unique
+  assetTag        String?      @unique // Internal asset tag
+  hostname        String? // From Observium or manual
+  purchaseDate    DateTime?
+  purchasePrice   Decimal?     @db.Decimal(10, 2)
+  location        String?
+  rackPosition    String?
+  status          AssetStatus  @default(ACTIVE)
+  owner           String? // Department or person
+  notes           String?
+  observiumId     Int?         @unique // Link to Observium device ID
+  lastSyncAt      DateTime? // Last sync from Observium
+  lastAuditDate   DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  model              HardwareModel           @relation(fields: [modelId], references: [id])
+  licenses           AssetLicenseMapping[]
+  contracts          AssetContractMapping[]
+  observiumSyncLogs  ObserviumSyncLog[]
+
+  @@index([modelId])
+  @@index([serialNumber])
+  @@index([hostname])
+  @@map("hardware_assets")
+}
+
+enum AssetStatus {
+  ACTIVE
+  SPARE
+  DEFECT
+  RETIRED
+  IN_REPAIR
+  MISSING
+}
+
+// ============================================
+// SOFTWARE LICENSES
+// ============================================
+
+model License {
+  id                  String        @id @default(uuid())
+  licenseKey          String?       @unique
+  licenseType         LicenseType
+  softwareProduct     String // e.g., "Junos OS", "Juniper ATP"
+  quantity            Int           @default(1)
+  purchaseDate        DateTime?
+  expiryDate          DateTime?
+  cost                Decimal?      @db.Decimal(10, 2)
+  vendorContractNumber String?
+  notes               String?
+  isActive            Boolean       @default(true)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  assets AssetLicenseMapping[]
+
+  @@map("licenses")
+}
+
+enum LicenseType {
+  SUBSCRIPTION
+  PERPETUAL
+  FEATURE
+  TRIAL
+}
+
+// ============================================
+// MAINTENANCE CONTRACTS
+// ============================================
+
+model MaintenanceContract {
+  id               String         @id @default(uuid())
+  contractNumber   String         @unique
+  contractType     ContractType
+  vendor           String         @default("Juniper Networks")
+  startDate        DateTime
+  endDate          DateTime
+  renewalDate      DateTime?
+  annualCost       Decimal?       @db.Decimal(10, 2)
+  serviceLevel     String? // e.g., "24x7", "Business Hours"
+  autoRenewal      Boolean        @default(false)
+  notes            String?
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  assets           AssetContractMapping[]
+  alerts           ContractAlert[]
+
+  @@map("maintenance_contracts")
+}
+
+enum ContractType {
+  JUNIPER_CARE
+  PREMIUM_CARE
+  THIRD_PARTY
+  OTHER
+}
+
+// ============================================
+// MAPPING TABLES (Many-to-Many)
+// ============================================
+
+model AssetLicenseMapping {
+  id           String    @id @default(uuid())
+  assetId      String
+  licenseId    String
+  assignedDate DateTime  @default(now())
+  status       String    @default("active") // active, inactive
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  asset   HardwareAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  license License       @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, licenseId])
+  @@index([assetId])
+  @@index([licenseId])
+  @@map("asset_license_mappings")
+}
+
+model AssetContractMapping {
+  id             String              @id @default(uuid())
+  assetId        String
+  contractId     String
+  coverageStart  DateTime
+  coverageEnd    DateTime
+  status         String              @default("active") // active, expired
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  asset    HardwareAsset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  contract MaintenanceContract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, contractId])
+  @@index([assetId])
+  @@index([contractId])
+  @@map("asset_contract_mappings")
+}
+
+// ============================================
+// OBSERVIUM INTEGRATION
+// ============================================
+
+model ObserviumSyncLog {
+  id                String    @id @default(uuid())
+  assetId           String?
+  observiumDeviceId Int
+  syncType          String // "create", "update", "skip"
+  syncStatus        String // "success", "error"
+  changes           Json? // What changed
+  errorMessage      String?
+  syncedAt          DateTime  @default(now())
+
+  asset HardwareAsset? @relation(fields: [assetId], references: [id], onDelete: SetNull)
+
+  @@index([assetId])
+  @@index([observiumDeviceId])
+  @@map("observium_sync_logs")
+}
+
+// ============================================
+// ALERTS & NOTIFICATIONS
+// ============================================
+
+model ContractAlert {
+  id          String              @id @default(uuid())
+  contractId  String
+  alertType   AlertType
+  alertDate   DateTime // When the alert should fire
+  sentAt      DateTime?
+  status      AlertStatus         @default(PENDING)
+  createdAt   DateTime            @default(now())
+
+  contract MaintenanceContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@index([alertDate])
+  @@map("contract_alerts")
+}
+
+enum AlertType {
+  CONTRACT_EXPIRY_90
+  CONTRACT_EXPIRY_60
+  CONTRACT_EXPIRY_30
+  LICENSE_EXPIRY_60
+  LICENSE_EXPIRY_30
+  LICENSE_EXPIRY_7
+  EOL_ANNOUNCED
+  EOS_ANNOUNCED
+}
+
+enum AlertStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  entityType String // "asset", "license", "contract"
+  entityId   String
+  action     String // "created", "updated", "deleted"
+  changes    Json? // What changed
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
