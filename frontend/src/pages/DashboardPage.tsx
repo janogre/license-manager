@@ -1,58 +1,51 @@
-import { useQuery } from '@tanstack/react-query'
-import api from '@/api/client'
-import { HardDrive, AlertTriangle, FileText, Key, DollarSign } from 'lucide-react'
+import { HardDrive, AlertTriangle, FileText, Key, DollarSign, TrendingUp } from 'lucide-react'
+import { StatCard } from '@/components/ui/StatCard'
+import { Card, CardHeader } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { mockDashboardStats, mockAssetsByStatus, mockRecentSyncs } from '@/utils/mockData'
+import { format } from 'date-fns'
 
 export default function DashboardPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['dashboard-stats'],
-    queryFn: async () => {
-      const response = await api.get('/dashboard/stats')
-      return response.data
-    },
-  })
-
-  if (isLoading) {
-    return <div className="text-center py-12">Loading...</div>
-  }
-
-  const stats = data?.stats || {}
-  const assetsByStatus = data?.assetsByStatus || []
-  const recentSyncs = data?.recentSyncs || []
+  const stats = mockDashboardStats
+  const assetsByStatus = mockAssetsByStatus
+  const recentSyncs = mockRecentSyncs
 
   const statCards = [
     {
       name: 'Total Assets',
-      value: stats.totalAssets || 0,
+      value: stats.totalAssets,
       icon: HardDrive,
       color: 'bg-blue-500',
+      trend: { value: '+2 this month', positive: true },
     },
     {
       name: 'Assets Without Contracts',
-      value: stats.assetsWithoutContracts || 0,
+      value: stats.assetsWithoutContracts,
       icon: AlertTriangle,
       color: 'bg-red-500',
+      trend: { value: 'Needs attention', positive: false },
     },
     {
       name: 'Active Contracts',
-      value: stats.activeContracts || 0,
+      value: stats.activeContracts,
       icon: FileText,
       color: 'bg-green-500',
     },
     {
-      name: 'Expiring Soon',
-      value: stats.expiringContracts || 0,
+      name: 'Expiring Soon (90 days)',
+      value: stats.expiringContracts,
       icon: AlertTriangle,
       color: 'bg-orange-500',
     },
     {
       name: 'Total Licenses',
-      value: stats.totalLicenses || 0,
+      value: stats.totalLicenses,
       icon: Key,
       color: 'bg-purple-500',
     },
     {
       name: 'Annual Cost',
-      value: `$${(stats.totalAnnualCost || 0).toLocaleString()}`,
+      value: `$${stats.totalAnnualCost.toLocaleString()}`,
       icon: DollarSign,
       color: 'bg-indigo-500',
     },
@@ -60,72 +53,146 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm text-gray-600 mt-1">
+            Overview of your Juniper asset and license portfolio
+          </p>
+        </div>
+        <div className="text-sm text-gray-500">
+          Last updated: {format(new Date(), 'MMM d, yyyy HH:mm')}
+        </div>
+      </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {statCards.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <div key={stat.name} className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className={`flex-shrink-0 ${stat.color} rounded-md p-3`}>
-                    <Icon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
-                      <dd className="text-2xl font-semibold text-gray-900">{stat.value}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
+        {statCards.map((stat) => (
+          <StatCard key={stat.name} {...stat} />
+        ))}
       </div>
 
+      {/* Charts and Details */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Assets by Status */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Assets by Status</h2>
-          <div className="space-y-3">
-            {assetsByStatus.map((item: any) => (
-              <div key={item.status} className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">{item.status}</span>
-                <span className="text-sm font-semibold text-gray-900">{item.count}</span>
-              </div>
-            ))}
+        <Card>
+          <CardHeader title="Assets by Status" subtitle="Current distribution" />
+          <div className="space-y-4">
+            {assetsByStatus.map((item) => {
+              const total = assetsByStatus.reduce((sum, i) => sum + i.count, 0)
+              const percentage = Math.round((item.count / total) * 100)
+
+              return (
+                <div key={item.status}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={
+                          item.status === 'ACTIVE'
+                            ? 'success'
+                            : item.status === 'SPARE'
+                            ? 'info'
+                            : item.status === 'DEFECT'
+                            ? 'danger'
+                            : 'default'
+                        }
+                      >
+                        {item.status}
+                      </Badge>
+                      <span className="text-sm text-gray-600">{item.count} assets</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">{percentage}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-primary-600 h-2 rounded-full transition-all"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
-        </div>
+        </Card>
 
         {/* Recent Sync Activity */}
-        <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Recent Sync Activity</h2>
+        <Card>
+          <CardHeader
+            title="Recent Sync Activity"
+            subtitle="Latest Observium synchronizations"
+          />
           <div className="space-y-3">
             {recentSyncs.length > 0 ? (
-              recentSyncs.map((sync: any) => (
-                <div key={sync.id} className="flex items-center justify-between text-sm">
-                  <div>
+              recentSyncs.map((sync) => (
+                <div
+                  key={sync.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex-1">
                     <div className="font-medium text-gray-900">
                       {sync.asset?.hostname || sync.asset?.serialNumber || 'Unknown'}
                     </div>
-                    <div className="text-gray-500">{sync.syncType}</div>
+                    <div className="text-sm text-gray-500">
+                      {sync.syncType} • {format(new Date(sync.syncedAt), 'MMM d, HH:mm')}
+                    </div>
                   </div>
-                  <div className={`px-2 py-1 rounded-full text-xs ${
-                    sync.syncStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
+                  <Badge variant={sync.syncStatus === 'success' ? 'success' : 'danger'}>
                     {sync.syncStatus}
-                  </div>
+                  </Badge>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-gray-500">No recent sync activity</p>
+              <p className="text-sm text-gray-500 text-center py-4">
+                No recent sync activity
+              </p>
             )}
           </div>
-        </div>
+        </Card>
       </div>
+
+      {/* Alerts and Warnings */}
+      <Card>
+        <CardHeader title="Important Alerts" subtitle="Items requiring attention" />
+        <div className="space-y-3">
+          {stats.assetsWithoutContracts > 0 && (
+            <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+              <div className="flex-1">
+                <div className="font-medium text-red-900">
+                  {stats.assetsWithoutContracts} assets without maintenance contracts
+                </div>
+                <p className="text-sm text-red-700 mt-1">
+                  These assets are not covered by support. Consider adding them to a contract.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {stats.expiringContracts > 0 && (
+            <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+              <div className="flex-1">
+                <div className="font-medium text-orange-900">
+                  {stats.expiringContracts} contracts expiring in the next 90 days
+                </div>
+                <p className="text-sm text-orange-700 mt-1">
+                  Review and renew these contracts to maintain support coverage.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />
+            <div className="flex-1">
+              <div className="font-medium text-green-900">System Health: Good</div>
+              <p className="text-sm text-green-700 mt-1">
+                {stats.activeContracts} active contracts covering {stats.totalAssets - stats.assetsWithoutContracts} assets.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }
