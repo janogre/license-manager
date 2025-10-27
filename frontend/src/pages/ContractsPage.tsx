@@ -11,6 +11,7 @@ import { format, differenceInDays } from 'date-fns'
 export default function ContractsPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedContract, setSelectedContract] = useState<any>(null)
 
   const activeContracts = mockContracts.filter((c) => c.isActive)
 
@@ -218,9 +219,18 @@ export default function ContractsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={contract.assets.length > 0 ? 'success' : 'default'}>
-                        {contract.assets.length} assets
-                      </Badge>
+                      {contract.assets.length > 0 ? (
+                        <button
+                          onClick={() => setSelectedContract(contract)}
+                          className="inline-block"
+                        >
+                          <Badge variant="success" className="cursor-pointer hover:opacity-80">
+                            {contract.assets.length} assets
+                          </Badge>
+                        </button>
+                      ) : (
+                        <Badge variant="default">0 assets</Badge>
+                      )}
                       {contract.assets.length > 0 && (
                         <div className="text-xs text-gray-500 mt-1">
                           {contract.assets.slice(0, 2).map((a: any) => a.asset.hostname || a.asset.serialNumber).join(', ')}
@@ -240,6 +250,68 @@ export default function ContractsPage() {
           </table>
         </div>
       </Card>
+
+      {/* Assets Modal */}
+      <Modal
+        isOpen={!!selectedContract}
+        onClose={() => setSelectedContract(null)}
+        title={`Assets covered by ${selectedContract?.contractNumber}`}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <div className="text-sm text-gray-600">
+            Contract: <span className="font-medium text-gray-900">{selectedContract?.contractNumber}</span>
+            <br />
+            Type: {selectedContract && getContractTypeBadge(selectedContract.contractType)}
+            <br />
+            Period: {selectedContract && format(new Date(selectedContract.startDate), 'MMM d, yyyy')} - {selectedContract && format(new Date(selectedContract.endDate), 'MMM d, yyyy')}
+          </div>
+
+          <div className="border-t border-gray-200 pt-4">
+            <h4 className="font-medium text-gray-900 mb-3">
+              Covered Assets ({selectedContract?.assets.length || 0})
+            </h4>
+            <div className="space-y-3">
+              {selectedContract?.assets.map((assetMapping: any) => {
+                const asset = assetMapping.asset
+                return (
+                  <div
+                    key={asset.serialNumber}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">
+                        {asset.hostname || asset.serialNumber}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Serial: {asset.serialNumber}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Model: {asset.model.modelName} ({asset.model.modelType})
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <Badge variant={asset.status === 'ACTIVE' ? 'success' : 'default'}>
+                        {asset.status}
+                      </Badge>
+                      {asset.location && (
+                        <div className="text-xs text-gray-500">{asset.location}</div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {selectedContract?.notes && (
+            <div className="border-t border-gray-200 pt-4">
+              <h4 className="font-medium text-gray-900 mb-2">Notes</h4>
+              <p className="text-sm text-gray-600">{selectedContract.notes}</p>
+            </div>
+          )}
+        </div>
+      </Modal>
 
       {/* Add Contract Modal */}
       <Modal
