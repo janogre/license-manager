@@ -7,6 +7,7 @@ import {
   Box,
   BarChart3,
   RefreshCw,
+  MapPin,
   User,
   Menu,
   X,
@@ -19,6 +20,7 @@ const navigation = [
   { name: 'Licenses', href: '/licenses', icon: Key },
   { name: 'Contracts', href: '/contracts', icon: FileText },
   { name: 'Models', href: '/models', icon: Box },
+  { name: 'Netbox', href: '/netbox', icon: MapPin },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Sync', href: '/sync', icon: RefreshCw },
 ]

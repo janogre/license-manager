@@ -336,3 +336,150 @@ export const mockRecentSyncs = [
     asset: { hostname: 'mx204-edge-01.trondheim', serialNumber: 'JN5566778899' },
   },
 ]
+
+// Netbox Mock Data
+export const mockNetboxSites = [
+  {
+    id: 1,
+    name: 'Oslo DC1',
+    slug: 'oslo-dc1',
+    description: 'Primary datacenter in Oslo',
+    status: { value: 'active', label: 'Active' },
+  },
+  {
+    id: 2,
+    name: 'Bergen Office',
+    slug: 'bergen-office',
+    description: 'Bergen office location',
+    status: { value: 'active', label: 'Active' },
+  },
+  {
+    id: 3,
+    name: 'Trondheim DC',
+    slug: 'trondheim-dc',
+    description: 'Secondary datacenter in Trondheim',
+    status: { value: 'active', label: 'Active' },
+  },
+]
+
+export const mockNetboxLocations = [
+  {
+    id: 1,
+    name: 'Server Room A',
+    slug: 'server-room-a',
+    site: { id: 1, name: 'Oslo DC1', slug: 'oslo-dc1' },
+    description: 'Main server room',
+  },
+  {
+    id: 2,
+    name: 'Server Room B',
+    slug: 'server-room-b',
+    site: { id: 1, name: 'Oslo DC1', slug: 'oslo-dc1' },
+    description: 'Secondary server room',
+  },
+  {
+    id: 3,
+    name: 'Spare Parts Storage',
+    slug: 'spare-parts',
+    site: { id: 1, name: 'Oslo DC1', slug: 'oslo-dc1' },
+    description: 'Spare equipment storage',
+  },
+  {
+    id: 4,
+    name: 'Network Closet',
+    slug: 'network-closet',
+    site: { id: 2, name: 'Bergen Office', slug: 'bergen-office' },
+    description: 'Main network equipment room',
+  },
+  {
+    id: 5,
+    name: 'Main Server Room',
+    slug: 'main-server-room',
+    site: { id: 3, name: 'Trondheim DC', slug: 'trondheim-dc' },
+    description: 'Primary datacenter space',
+  },
+]
+
+export const mockNetboxRacks = [
+  {
+    id: 1,
+    name: 'Rack A-12',
+    site: { id: 1, name: 'Oslo DC1', slug: 'oslo-dc1' },
+    location: { id: 1, name: 'Server Room A' },
+    status: { value: 'active', label: 'Active' },
+    u_height: 42,
+    desc_units: false,
+  },
+  {
+    id: 2,
+    name: 'Rack B-05',
+    site: { id: 1, name: 'Oslo DC1', slug: 'oslo-dc1' },
+    location: { id: 2, name: 'Server Room B' },
+    status: { value: 'active', label: 'Active' },
+    u_height: 42,
+    desc_units: false,
+  },
+  {
+    id: 3,
+    name: 'Rack 01',
+    site: { id: 2, name: 'Bergen Office', slug: 'bergen-office' },
+    location: { id: 4, name: 'Network Closet' },
+    status: { value: 'active', label: 'Active' },
+    u_height: 24,
+    desc_units: false,
+  },
+  {
+    id: 4,
+    name: 'Rack C-03',
+    site: { id: 3, name: 'Trondheim DC', slug: 'trondheim-dc' },
+    location: { id: 5, name: 'Main Server Room' },
+    status: { value: 'active', label: 'Active' },
+    u_height: 42,
+    desc_units: false,
+  },
+]
+
+export const mockRackElevations = [
+  {
+    id: 1,
+    name: 'Rack A-12',
+    height: 42,
+    units: [
+      { id: 1, position: 10, name: 'U10', occupied: true, device: { id: 1, name: 'mx240-core-01.oslo', display: 'MX240 Router' } },
+      { id: 2, position: 11, name: 'U11', occupied: true, device: { id: 1, name: 'mx240-core-01.oslo', display: 'MX240 Router' } },
+      { id: 3, position: 12, name: 'U12', occupied: true, device: { id: 1, name: 'mx240-core-01.oslo', display: 'MX240 Router' } },
+      { id: 4, position: 20, name: 'U20', occupied: true, device: { id: 2, name: 'server-01', display: 'Dell R640 Server' } },
+      { id: 5, position: 21, name: 'U21', occupied: true, device: { id: 2, name: 'server-01', display: 'Dell R640 Server' } },
+      { id: 6, position: 35, name: 'U35', occupied: true, device: { id: 3, name: 'pdu-01', display: 'APC PDU' } },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Rack B-05',
+    height: 42,
+    units: [
+      { id: 7, position: 8, name: 'U8', occupied: true, device: { id: 4, name: 'ex4300-access-02.oslo', display: 'EX4300 Switch' } },
+      { id: 8, position: 15, name: 'U15', occupied: true, device: { id: 5, name: 'server-02', display: 'Dell R740 Server' } },
+      { id: 9, position: 16, name: 'U16', occupied: true, device: { id: 5, name: 'server-02', display: 'Dell R740 Server' } },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Rack 01',
+    height: 24,
+    units: [
+      { id: 10, position: 5, name: 'U5', occupied: true, device: { id: 6, name: 'srx345-fw-01.bergen', display: 'SRX345 Firewall' } },
+      { id: 11, position: 10, name: 'U10', occupied: true, device: { id: 7, name: 'switch-01', display: 'EX2300 Switch' } },
+    ],
+  },
+  {
+    id: 4,
+    name: 'Rack C-03',
+    height: 42,
+    units: [
+      { id: 12, position: 15, name: 'U15', occupied: true, device: { id: 8, name: 'mx204-edge-01.trondheim', display: 'MX204 Router' } },
+      { id: 13, position: 16, name: 'U16', occupied: true, device: { id: 8, name: 'mx204-edge-01.trondheim', display: 'MX204 Router' } },
+      { id: 14, position: 17, name: 'U17', occupied: true, device: { id: 8, name: 'mx204-edge-01.trondheim', display: 'MX204 Router' } },
+    ],
+  },
+]

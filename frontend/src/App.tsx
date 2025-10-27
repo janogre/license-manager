@@ -8,6 +8,7 @@ import ContractsPage from './pages/ContractsPage'
 import ModelsPage from './pages/ModelsPage'
 import ReportsPage from './pages/ReportsPage'
 import SyncPage from './pages/SyncPage'
+import NetboxPage from './pages/NetboxPage'
 
 // Prototype mode - no authentication required
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <Route path="models" element={<ModelsPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="sync" element={<SyncPage />} />
+        <Route path="netbox" element={<NetboxPage />} />
       </Route>
     </Routes>
   )

@@ -14,9 +14,11 @@ import modelRoutes from './routes/model.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import syncRoutes from './routes/sync.routes';
 import reportRoutes from './routes/report.routes';
+import netboxRoutes from './routes/netbox.routes';
 
 // Import services
 import { syncObserviumDevices } from './services/observium.service';
+import { syncNetboxData } from './services/netbox.service';
 import { checkAndSendAlerts } from './services/alert.service';
 import { logger } from './utils/logger';
 
@@ -63,6 +65,7 @@ app.use('/api/models', modelRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/netbox', netboxRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -93,6 +96,21 @@ function setupCronJobs() {
       }
     });
     logger.info(`Observium sync scheduled: ${observiumCron}`);
+  }
+
+  // Netbox sync - Daily at 6 AM by default
+  const netboxCron = process.env.NETBOX_SYNC_CRON || '0 6 * * *';
+  if (process.env.NETBOX_ENABLED === 'true') {
+    cron.schedule(netboxCron, async () => {
+      logger.info('Starting scheduled Netbox sync...');
+      try {
+        await syncNetboxData();
+        logger.info('Scheduled Netbox sync completed');
+      } catch (error) {
+        logger.error('Scheduled Netbox sync failed:', error);
+      }
+    });
+    logger.info(`Netbox sync scheduled: ${netboxCron}`);
   }
 
   // Check for expiring contracts and send alerts - Daily at 8 AM
