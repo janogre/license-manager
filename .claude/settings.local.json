@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(test:*)",
+      "Bash(npm run prisma:generate:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(node_modules.binprisma generate)",
+      "Bash(./node_modules/.bin/prisma:*)",
+      "Bash(npm install:*)",
+      "Bash(psql:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(npm run prisma:seed:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

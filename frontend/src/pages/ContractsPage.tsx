@@ -1,35 +1,99 @@
-import { useState } from 'react'
-import { Plus, FileText, Calendar, DollarSign, AlertTriangle } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Plus, FileText, Calendar, DollarSign, AlertTriangle, Loader2, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
-import { Input, Select, Textarea } from '@/components/ui/Form'
-import { mockContracts } from '@/utils/mockData'
+import { Select } from '@/components/ui/Form'
+import { useContracts, useCreateContract, useUpdateContract, useDeleteContract } from '@/hooks/useContracts'
+import ContractForm from '@/components/ContractForm'
 import { format, differenceInDays } from 'date-fns'
+import type { MaintenanceContract } from '@/types'
 
 export default function ContractsPage() {
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editingContract, setEditingContract] = useState<MaintenanceContract | null>(null)
+  const [deletingContract, setDeletingContract] = useState<MaintenanceContract | null>(null)
   const [statusFilter, setStatusFilter] = useState('all')
-  const [selectedContract, setSelectedContract] = useState<any>(null)
+  const [selectedContract, setSelectedContract] = useState<MaintenanceContract | null>(null)
 
-  const activeContracts = mockContracts.filter((c) => c.isActive)
+  // Fetch contracts from API
+  const { data, isLoading, error } = useContracts({ limit: 100 })
 
-  const expiringContracts = activeContracts.filter((c) => {
-    const daysUntilExpiry = differenceInDays(new Date(c.endDate), new Date())
-    return daysUntilExpiry > 0 && daysUntilExpiry <= 90
-  })
+  // Mutations
+  const createContract = useCreateContract()
+  const updateContract = useUpdateContract()
+  const deleteContract = useDeleteContract()
 
-  const totalAnnualCost = activeContracts.reduce(
-    (sum, c) => sum + (c.annualCost || 0),
-    0
-  )
+  const handleCreateContract = async (formData: Partial<MaintenanceContract>) => {
+    try {
+      await createContract.mutateAsync(formData)
+      setShowAddModal(false)
+    } catch (err) {
+      console.error('Failed to create contract:', err)
+    }
+  }
 
-  const filteredContracts = mockContracts.filter((contract) => {
-    if (statusFilter === 'active') return contract.isActive
-    if (statusFilter === 'inactive') return !contract.isActive
-    return true
-  })
+  const handleUpdateContract = async (formData: Partial<MaintenanceContract>) => {
+    if (!editingContract) return
+    try {
+      await updateContract.mutateAsync({ id: editingContract.id, ...formData })
+      setEditingContract(null)
+    } catch (err) {
+      console.error('Failed to update contract:', err)
+    }
+  }
+
+  const handleDeleteContract = async () => {
+    if (!deletingContract) return
+    try {
+      await deleteContract.mutateAsync(deletingContract.id)
+      setDeletingContract(null)
+    } catch (err) {
+      console.error('Failed to delete contract:', err)
+    }
+  }
+
+  const contracts = data?.contracts || []
+
+  const activeContracts = useMemo(() => contracts.filter((c) => c.isActive), [contracts])
+
+  const expiringContracts = useMemo(() => {
+    return activeContracts.filter((c) => {
+      const daysUntilExpiry = differenceInDays(new Date(c.endDate), new Date())
+      return daysUntilExpiry > 0 && daysUntilExpiry <= 90
+    })
+  }, [activeContracts])
+
+  const stats = useMemo(() => {
+    const totalAnnualCost = activeContracts.reduce((sum, c) => {
+      const cost = typeof c.annualCost === 'string' ? parseFloat(c.annualCost) : (c.annualCost || 0)
+      return sum + cost
+    }, 0)
+
+    return {
+      total: contracts.length,
+      active: activeContracts.length,
+      expiring: expiringContracts.length,
+      totalCost: totalAnnualCost,
+    }
+  }, [contracts, activeContracts, expiringContracts])
+
+  const filteredContracts = useMemo(() => {
+    return contracts.filter((contract) => {
+      if (statusFilter === 'active') return contract.isActive
+      if (statusFilter === 'inactive') return !contract.isActive
+      return true
+    })
+  }, [contracts, statusFilter])
+
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-red-800">Error loading contracts: {(error as any).message}</p>
+      </div>
+    )
+  }
 
   const getContractTypeBadge = (type: string) => {
     switch (type) {
@@ -68,7 +132,9 @@ export default function ContractsPage() {
             </div>
             <div>
               <div className="text-sm text-gray-600">Total Contracts</div>
-              <div className="text-2xl font-bold text-gray-900">{mockContracts.length}</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.total}
+              </div>
             </div>
           </div>
         </Card>
@@ -79,7 +145,9 @@ export default function ContractsPage() {
             </div>
             <div>
               <div className="text-sm text-gray-600">Active</div>
-              <div className="text-2xl font-bold text-green-600">{activeContracts.length}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.active}
+              </div>
             </div>
           </div>
         </Card>
@@ -90,7 +158,9 @@ export default function ContractsPage() {
             </div>
             <div>
               <div className="text-sm text-gray-600">Expiring Soon</div>
-              <div className="text-2xl font-bold text-orange-600">{expiringContracts.length}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.expiring}
+              </div>
             </div>
           </div>
         </Card>
@@ -102,7 +172,7 @@ export default function ContractsPage() {
             <div>
               <div className="text-sm text-gray-600">Annual Cost</div>
               <div className="text-2xl font-bold text-gray-900">
-                ${totalAnnualCost.toLocaleString()}
+                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `$${stats.totalCost.toLocaleString()}`}
               </div>
             </div>
           </div>
@@ -176,6 +246,9 @@ export default function ContractsPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -242,6 +315,24 @@ export default function ContractsPage() {
                       <Badge variant={contract.isActive ? 'success' : 'danger'}>
                         {contract.isActive ? 'Active' : 'Inactive'}
                       </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-right text-sm font-medium">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setEditingContract(contract)}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Edit contract"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingContract(contract)}
+                          className="text-red-600 hover:text-red-900"
+                          title="Delete contract"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -316,48 +407,155 @@ export default function ContractsPage() {
       {/* Add Contract Modal */}
       <Modal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => !createContract.isPending && setShowAddModal(false)}
         title="Add New Contract"
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowAddModal(false)}
+              disabled={createContract.isPending}
+            >
               Cancel
             </Button>
-            <Button onClick={() => setShowAddModal(false)}>Save Contract</Button>
+            <Button
+              onClick={() => {
+                const form = document.querySelector('form[data-contract-form]') as HTMLFormElement
+                if (form) form.requestSubmit()
+              }}
+              disabled={createContract.isPending}
+            >
+              {createContract.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Contract'
+              )}
+            </Button>
           </>
         }
       >
-        <div className="space-y-4">
-          <Input label="Contract Number" placeholder="JC-2024-001" required />
-          <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="Contract Type"
-              options={[
-                { value: 'PREMIUM_CARE', label: 'Premium Care' },
-                { value: 'JUNIPER_CARE', label: 'Juniper Care' },
-                { value: 'THIRD_PARTY', label: 'Third Party' },
-                { value: 'OTHER', label: 'Other' },
-              ]}
+        <ContractForm onSubmit={handleCreateContract} isSubmitting={createContract.isPending} />
+        {createContract.isError && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-800">
+              Error: {(createContract.error as any)?.response?.data?.error || 'Failed to create contract'}
+            </p>
+          </div>
+        )}
+      </Modal>
+
+      {/* Edit Contract Modal */}
+      <Modal
+        isOpen={!!editingContract}
+        onClose={() => !updateContract.isPending && setEditingContract(null)}
+        title="Edit Contract"
+        size="lg"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setEditingContract(null)}
+              disabled={updateContract.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const form = document.querySelector('form[data-contract-form]') as HTMLFormElement
+                if (form) form.requestSubmit()
+              }}
+              disabled={updateContract.isPending}
+            >
+              {updateContract.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Contract'
+              )}
+            </Button>
+          </>
+        }
+      >
+        {editingContract && (
+          <>
+            <ContractForm
+              contract={editingContract}
+              onSubmit={handleUpdateContract}
+              isSubmitting={updateContract.isPending}
             />
-            <Input label="Vendor" placeholder="Juniper Networks" />
+            {updateContract.isError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">
+                  Error: {(updateContract.error as any)?.response?.data?.error || 'Failed to update contract'}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deletingContract}
+        onClose={() => !deleteContract.isPending && setDeletingContract(null)}
+        title="Delete Contract"
+        size="md"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setDeletingContract(null)}
+              disabled={deleteContract.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteContract}
+              disabled={deleteContract.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteContract.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Contract'
+              )}
+            </Button>
+          </>
+        }
+      >
+        {deletingContract && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to delete this contract? This action cannot be undone.
+            </p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-600">Contract Number:</div>
+                <div className="font-medium text-gray-900">{deletingContract.contractNumber}</div>
+                <div className="text-gray-600">Vendor:</div>
+                <div className="font-medium text-gray-900">{deletingContract.vendor}</div>
+                <div className="text-gray-600">Type:</div>
+                <div className="font-medium text-gray-900">{deletingContract.contractType}</div>
+              </div>
+            </div>
+            {deleteContract.isError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">
+                  Error: {(deleteContract.error as any)?.response?.data?.error || 'Failed to delete contract'}
+                </p>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input type="date" label="Start Date" required />
-            <Input type="date" label="End Date" required />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Input type="number" label="Annual Cost" placeholder="125000" />
-            <Input label="Service Level" placeholder="24x7, 4-hour response" />
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="autoRenewal" className="rounded" />
-            <label htmlFor="autoRenewal" className="text-sm text-gray-700">
-              Enable auto-renewal
-            </label>
-          </div>
-          <Textarea label="Notes" rows={3} placeholder="Additional contract details..." />
-        </div>
+        )}
       </Modal>
     </div>
   )

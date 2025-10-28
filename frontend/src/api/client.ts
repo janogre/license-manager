@@ -18,14 +18,15 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Handle 401 errors
+// Handle 401 errors (disabled in prototype mode)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-    }
+    // In prototype mode, we don't redirect to login on 401
+    // if (error.response?.status === 401) {
+    //   localStorage.removeItem('token')
+    //   window.location.href = '/login'
+    // }
     return Promise.reject(error)
   }
 )

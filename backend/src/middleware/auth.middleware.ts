@@ -11,6 +11,16 @@ export interface AuthRequest extends Request {
 }
 
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
+  // Prototype mode - skip authentication if PROTOTYPE_MODE is enabled
+  if (process.env.PROTOTYPE_MODE === 'true') {
+    req.user = {
+      id: 'prototype-user',
+      email: 'admin@example.com',
+      role: UserRole.ADMIN,
+    };
+    return next();
+  }
+
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
 

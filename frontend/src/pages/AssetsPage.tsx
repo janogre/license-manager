@@ -1,28 +1,83 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, Plus, Download, Filter } from 'lucide-react'
+import { Search, Plus, Download, Filter, Loader2, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input, Select } from '@/components/ui/Form'
 import { Modal } from '@/components/ui/Modal'
-import { mockAssets } from '@/utils/mockData'
+import { useAssets, useCreateAsset, useUpdateAsset, useDeleteAsset } from '@/hooks/useAssets'
+import AssetForm from '@/components/AssetForm'
 import { format } from 'date-fns'
+import type { AssetStatus, CreateAssetInput, HardwareAsset } from '@/types'
 
 export default function AssetsPage() {
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState<AssetStatus | 'all'>('all')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [editingAsset, setEditingAsset] = useState<HardwareAsset | null>(null)
+  const [deletingAsset, setDeletingAsset] = useState<HardwareAsset | null>(null)
+  const [page, setPage] = useState(1)
 
-  const filteredAssets = mockAssets.filter((asset) => {
-    const matchesSearch =
-      asset.hostname?.toLowerCase().includes(search.toLowerCase()) ||
-      asset.serialNumber.toLowerCase().includes(search.toLowerCase()) ||
-      asset.assetTag?.toLowerCase().includes(search.toLowerCase())
-
-    const matchesStatus = statusFilter === 'all' || asset.status === statusFilter
-
-    return matchesSearch && matchesStatus
+  // Fetch assets from API
+  const { data, isLoading, error } = useAssets({
+    page,
+    limit: 50,
+    search: search || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
   })
+
+  // Mutations
+  const createAsset = useCreateAsset()
+  const updateAsset = useUpdateAsset()
+  const deleteAsset = useDeleteAsset()
+
+  const handleCreateAsset = async (formData: CreateAssetInput) => {
+    try {
+      await createAsset.mutateAsync(formData)
+      setShowAddModal(false)
+    } catch (err) {
+      console.error('Failed to create asset:', err)
+    }
+  }
+
+  const handleUpdateAsset = async (formData: CreateAssetInput) => {
+    if (!editingAsset) return
+    try {
+      await updateAsset.mutateAsync({ id: editingAsset.id, ...formData })
+      setEditingAsset(null)
+    } catch (err) {
+      console.error('Failed to update asset:', err)
+    }
+  }
+
+  const handleDeleteAsset = async () => {
+    if (!deletingAsset) return
+    try {
+      await deleteAsset.mutateAsync(deletingAsset.id)
+      setDeletingAsset(null)
+    } catch (err) {
+      console.error('Failed to delete asset:', err)
+    }
+  }
+
+  const assets = data?.assets || []
+  const pagination = data?.pagination
+
+  // Calculate stats from fetched data
+  const stats = useMemo(() => {
+    return {
+      total: pagination?.total || 0,
+      active: assets.filter((a) => a.status === 'ACTIVE').length,
+      withoutContracts: assets.filter((a) => !a.contracts || a.contracts.length === 0).length,
+      totalValue: assets.reduce((sum, a) => {
+        // Convert Decimal string to number
+        const price = typeof a.purchasePrice === 'string'
+          ? parseFloat(a.purchasePrice)
+          : (a.purchasePrice || 0)
+        return sum + price
+      }, 0),
+    }
+  }, [assets, pagination])
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -39,6 +94,14 @@ export default function AssetsPage() {
     }
   }
 
+  if (error) {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-red-800">Error loading assets: {(error as any).message}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -49,7 +112,7 @@ export default function AssetsPage() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary">
+          <Button variant="secondary" disabled>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
@@ -93,24 +156,30 @@ export default function AssetsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white shadow rounded-lg p-4">
           <div className="text-sm text-gray-600">Total Assets</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">{mockAssets.length}</div>
+          <div className="text-2xl font-bold text-gray-900 mt-1">
+            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.total}
+          </div>
         </div>
         <div className="bg-white shadow rounded-lg p-4">
           <div className="text-sm text-gray-600">Active</div>
           <div className="text-2xl font-bold text-green-600 mt-1">
-            {mockAssets.filter((a) => a.status === 'ACTIVE').length}
+            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.active}
           </div>
         </div>
         <div className="bg-white shadow rounded-lg p-4">
           <div className="text-sm text-gray-600">Without Contracts</div>
           <div className="text-2xl font-bold text-red-600 mt-1">
-            {mockAssets.filter((a) => a.contracts.length === 0).length}
+            {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.withoutContracts}
           </div>
         </div>
         <div className="bg-white shadow rounded-lg p-4">
           <div className="text-sm text-gray-600">Total Value</div>
           <div className="text-2xl font-bold text-gray-900 mt-1">
-            ${mockAssets.reduce((sum, a) => sum + (a.purchasePrice || 0), 0).toLocaleString()}
+            {isLoading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              `$${stats.totalValue.toLocaleString()}`
+            )}
           </div>
         </div>
       </div>
@@ -138,10 +207,27 @@ export default function AssetsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Purchase Date
               </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAssets.map((asset) => (
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400" />
+                  <p className="mt-2 text-sm text-gray-500">Loading assets...</p>
+                </td>
+              </tr>
+            ) : assets.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                  No assets found matching your criteria
+                </td>
+              </tr>
+            ) : (
+              assets.map((asset) => (
               <tr key={asset.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4">
                   <Link
@@ -178,67 +264,220 @@ export default function AssetsPage() {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {asset.purchaseDate ? format(new Date(asset.purchaseDate), 'MMM d, yyyy') : '-'}
                 </td>
+                <td className="px-6 py-4 text-right text-sm font-medium">
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => setEditingAsset(asset)}
+                      className="text-blue-600 hover:text-blue-900"
+                      title="Edit asset"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeletingAsset(asset)}
+                      className="text-red-600 hover:text-red-900"
+                      title="Delete asset"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
-
-        {filteredAssets.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
-            No assets found matching your criteria
-          </div>
-        )}
       </div>
+
+      {/* Pagination */}
+      {pagination && pagination.pages > 1 && (
+        <div className="flex items-center justify-between bg-white px-4 py-3 rounded-lg shadow">
+          <div className="text-sm text-gray-700">
+            Showing <span className="font-medium">{(page - 1) * pagination.limit + 1}</span> to{' '}
+            <span className="font-medium">
+              {Math.min(page * pagination.limit, pagination.total)}
+            </span>{' '}
+            of <span className="font-medium">{pagination.total}</span> results
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setPage(page + 1)}
+              disabled={page === pagination.pages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Add Asset Modal */}
       <Modal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => !createAsset.isPending && setShowAddModal(false)}
         title="Add New Asset"
         size="lg"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowAddModal(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowAddModal(false)}
+              disabled={createAsset.isPending}
+            >
               Cancel
             </Button>
-            <Button onClick={() => setShowAddModal(false)}>Save Asset</Button>
+            <Button
+              onClick={() => {
+                const form = document.querySelector('form[data-asset-form]') as HTMLFormElement
+                if (form) form.requestSubmit()
+              }}
+              disabled={createAsset.isPending}
+            >
+              {createAsset.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Asset'
+              )}
+            </Button>
           </>
         }
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Serial Number" placeholder="JN1234567890" required />
-            <Input label="Asset Tag" placeholder="ASSET-001" />
+        <AssetForm onSubmit={handleCreateAsset} isSubmitting={createAsset.isPending} />
+        {createAsset.isError && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-800">
+              Error: {(createAsset.error as any)?.response?.data?.error || 'Failed to create asset'}
+            </p>
           </div>
-          <Input label="Hostname" placeholder="mx240-core-01.oslo" />
-          <Select
-            label="Model"
-            options={[
-              { value: '', label: 'Select a model' },
-              { value: 'm1', label: 'MX240' },
-              { value: 'm2', label: 'EX4300-48T' },
-              { value: 'm3', label: 'SRX345' },
-            ]}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Input label="Location" placeholder="Oslo DC1, Rack A-12" />
-            <Input label="Rack Position" placeholder="U10-U12" />
+        )}
+      </Modal>
+
+      {/* Edit Asset Modal */}
+      <Modal
+        isOpen={!!editingAsset}
+        onClose={() => !updateAsset.isPending && setEditingAsset(null)}
+        title="Edit Asset"
+        size="lg"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setEditingAsset(null)}
+              disabled={updateAsset.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                const form = document.querySelector('form[data-asset-form]') as HTMLFormElement
+                if (form) form.requestSubmit()
+              }}
+              disabled={updateAsset.isPending}
+            >
+              {updateAsset.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                'Update Asset'
+              )}
+            </Button>
+          </>
+        }
+      >
+        {editingAsset && (
+          <>
+            <AssetForm
+              asset={editingAsset}
+              onSubmit={handleUpdateAsset}
+              isSubmitting={updateAsset.isPending}
+            />
+            {updateAsset.isError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">
+                  Error: {(updateAsset.error as any)?.response?.data?.error || 'Failed to update asset'}
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!deletingAsset}
+        onClose={() => !deleteAsset.isPending && setDeletingAsset(null)}
+        title="Delete Asset"
+        size="md"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setDeletingAsset(null)}
+              disabled={deleteAsset.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteAsset}
+              disabled={deleteAsset.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteAsset.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Asset'
+              )}
+            </Button>
+          </>
+        }
+      >
+        {deletingAsset && (
+          <div className="space-y-4">
+            <p className="text-sm text-gray-700">
+              Are you sure you want to delete this asset? This action cannot be undone.
+            </p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-600">Serial Number:</div>
+                <div className="font-medium text-gray-900">{deletingAsset.serialNumber}</div>
+                {deletingAsset.hostname && (
+                  <>
+                    <div className="text-gray-600">Hostname:</div>
+                    <div className="font-medium text-gray-900">{deletingAsset.hostname}</div>
+                  </>
+                )}
+                {deletingAsset.model && (
+                  <>
+                    <div className="text-gray-600">Model:</div>
+                    <div className="font-medium text-gray-900">{deletingAsset.model.modelName}</div>
+                  </>
+                )}
+              </div>
+            </div>
+            {deleteAsset.isError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-sm text-red-800">
+                  Error: {(deleteAsset.error as any)?.response?.data?.error || 'Failed to delete asset'}
+                </p>
+              </div>
+            )}
           </div>
-          <Select
-            label="Status"
-            options={[
-              { value: 'ACTIVE', label: 'Active' },
-              { value: 'SPARE', label: 'Spare' },
-              { value: 'DEFECT', label: 'Defect' },
-              { value: 'RETIRED', label: 'Retired' },
-            ]}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Input type="date" label="Purchase Date" />
-            <Input type="number" label="Purchase Price" placeholder="45000" />
-          </div>
-          <Input label="Owner/Department" placeholder="Network Operations" />
-        </div>
+        )}
       </Modal>
     </div>
   )
