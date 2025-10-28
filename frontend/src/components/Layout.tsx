@@ -40,7 +40,7 @@ export default function Layout() {
           <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
           <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
             <div className="flex items-center justify-between px-4 py-4 border-b">
-              <span className="text-xl font-bold text-primary-600">License Manager</span>
+              <span className="text-xl font-bold text-primary-600">NEAS License Manager</span>
               <button onClick={() => setSidebarOpen(false)} className="text-gray-500 hover:text-gray-700">
                 <X className="h-6 w-6" />
               </button>
@@ -74,7 +74,7 @@ export default function Layout() {
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
           <div className="flex items-center px-4 py-4 border-b">
-            <span className="text-xl font-bold text-primary-600">License Manager</span>
+            <span className="text-xl font-bold text-primary-600">NEAS License Manager</span>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => {
