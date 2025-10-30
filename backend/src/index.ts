@@ -15,6 +15,9 @@ import dashboardRoutes from './routes/dashboard.routes';
 import syncRoutes from './routes/sync.routes';
 import reportRoutes from './routes/report.routes';
 import netboxRoutes from './routes/netbox.routes';
+import billingRoutes from './routes/billing';
+import contractTypeRoutes from './routes/contractType.routes';
+import forecastRoutes from './routes/forecast.routes';
 
 // Import services
 import { syncObserviumDevices } from './services/observium.service';
@@ -66,6 +69,9 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/netbox', netboxRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/contract-types', contractTypeRoutes);
+app.use('/api/forecast', forecastRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { prisma } from '../index';
+import { billingService } from '../services/billingService';
 
 export const getAssets = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 50, search, status, modelId } = req.query;
+    const { page = 1, limit = 50, search, status, modelId, location } = req.query;
 
     const where: any = {};
 
@@ -23,6 +24,10 @@ export const getAssets = async (req: Request, res: Response) => {
       where.modelId = modelId;
     }
 
+    if (location) {
+      where.location = { contains: location as string, mode: 'insensitive' };
+    }
+
     const [assets, total] = await Promise.all([
       prisma.hardwareAsset.findMany({
         where,
@@ -36,6 +41,12 @@ export const getAssets = async (req: Request, res: Response) => {
           contracts: {
             include: {
               contract: true,
+            },
+          },
+          billingMappings: {
+            where: { isActive: true },
+            include: {
+              billingGroup: true,
             },
           },
         },
@@ -76,6 +87,12 @@ export const getAssetById = async (req: Request, res: Response) => {
         contracts: {
           include: {
             contract: true,
+          },
+        },
+        billingMappings: {
+          where: { isActive: true },
+          include: {
+            billingGroup: true,
           },
         },
       },
@@ -125,6 +142,17 @@ export const createAsset = async (req: Request, res: Response) => {
         model: true,
       },
     });
+
+    // Auto-assign new asset to billing group if status is ACTIVE
+    if (status === 'ACTIVE' || (!status && asset.status === 'ACTIVE')) {
+      try {
+        await billingService.autoAssignAsset(asset.id);
+        console.log(`Auto-assigned asset ${asset.id} to billing group`);
+      } catch (autoAssignError) {
+        // Log the error but don't fail the asset creation
+        console.warn(`Failed to auto-assign asset ${asset.id} to billing group:`, autoAssignError);
+      }
+    }
 
     res.status(201).json({ asset });
   } catch (error: any) {

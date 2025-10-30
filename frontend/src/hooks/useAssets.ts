@@ -24,8 +24,8 @@ export function useAsset(id: string) {
   return useQuery({
     queryKey: ['assets', id],
     queryFn: async () => {
-      const { data } = await api.get<HardwareAsset>(`/assets/${id}`)
-      return data
+      const { data } = await api.get<{ asset: HardwareAsset }>(`/assets/${id}`)
+      return data.asset
     },
     enabled: !!id,
   })
@@ -37,8 +37,8 @@ export function useCreateAsset() {
 
   return useMutation({
     mutationFn: async (input: CreateAssetInput) => {
-      const { data } = await api.post<HardwareAsset>('/assets', input)
-      return data
+      const { data } = await api.post<{ asset: HardwareAsset }>('/assets', input)
+      return data.asset
     },
     onSuccess: () => {
       // Invalidate and refetch assets list
@@ -53,8 +53,8 @@ export function useUpdateAsset() {
 
   return useMutation({
     mutationFn: async ({ id, ...input }: UpdateAssetInput) => {
-      const { data } = await api.put<HardwareAsset>(`/assets/${id}`, input)
-      return data
+      const { data } = await api.put<{ asset: HardwareAsset }>(`/assets/${id}`, input)
+      return data.asset
     },
     onSuccess: (data) => {
       // Invalidate assets list and specific asset

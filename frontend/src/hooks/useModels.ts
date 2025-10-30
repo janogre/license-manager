@@ -7,8 +7,8 @@ export function useModels(params: GetModelsParams = {}) {
   return useQuery({
     queryKey: ['models', params],
     queryFn: async () => {
-      const { data } = await api.get<GetModelsResponse>('/models', { params })
-      return data
+      const { data } = await api.get<{ models: HardwareModel[] }>('/models', { params })
+      return { models: data.models, pagination: { total: data.models.length, page: 1, limit: 100, pages: 1 } }
     },
   })
 }
@@ -18,8 +18,8 @@ export function useModel(id: string) {
   return useQuery({
     queryKey: ['models', id],
     queryFn: async () => {
-      const { data } = await api.get<HardwareModel>(`/models/${id}`)
-      return data
+      const { data } = await api.get<{ model: HardwareModel }>(`/models/${id}`)
+      return data.model
     },
     enabled: !!id,
   })
@@ -30,7 +30,7 @@ export function useAllModels() {
   return useQuery({
     queryKey: ['models', 'all'],
     queryFn: async () => {
-      const { data } = await api.get<GetModelsResponse>('/models', {
+      const { data } = await api.get<{ models: HardwareModel[] }>('/models', {
         params: { limit: 1000 }, // Get all models
       })
       return data.models
@@ -45,8 +45,8 @@ export function useCreateModel() {
 
   return useMutation({
     mutationFn: async (modelData: CreateHardwareModelRequest) => {
-      const { data } = await api.post<HardwareModel>('/models', modelData)
-      return data
+      const { data } = await api.post<{ model: HardwareModel }>('/models', modelData)
+      return data.model
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['models'] })
@@ -60,8 +60,8 @@ export function useUpdateModel() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateHardwareModelRequest }) => {
-      const response = await api.put<HardwareModel>(`/models/${id}`, data)
-      return response.data
+      const response = await api.put<{ model: HardwareModel }>(`/models/${id}`, data)
+      return response.data.model
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['models'] })

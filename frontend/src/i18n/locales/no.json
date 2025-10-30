@@ -1,0 +1,217 @@
+{
+  "navigation": {
+    "dashboard": "Dashbord",
+    "assets": "Utstyr",
+    "licenses": "Lisenser",
+    "contracts": "Kontrakter",
+    "models": "Modeller",
+    "netbox": "Netbox",
+    "reports": "Rapporter",
+    "sync": "Synkronisering"
+  },
+  "dashboard": {
+    "title": "Dashbord",
+    "subtitle": "Oversikt over ditt Juniper utstyr og lisensportfølje",
+    "lastUpdated": "Sist oppdatert",
+    "stats": {
+      "totalAssets": "Totalt Utstyr",
+      "assetsWithoutContracts": "Utstyr Uten Kontrakter",
+      "activeContracts": "Aktive Kontrakter",
+      "expiringSoon": "Utløper Snart (90 dager)",
+      "totalLicenses": "Totale Lisenser",
+      "annualCost": "Årlig Kostnad (NOK)",
+      "trend": {
+        "thisMonth": "+2 denne måneden",
+        "needsAttention": "Krever oppmerksomhet"
+      }
+    },
+    "assetsByStatus": {
+      "title": "Utstyr etter Status",
+      "subtitle": "Nåværende fordeling",
+      "assets": "utstyr"
+    },
+    "recentSyncActivity": {
+      "title": "Nylig Synkroniseringsaktivitet",
+      "subtitle": "Siste Observium synkroniseringer",
+      "noActivity": "Ingen nylig synkroniseringsaktivitet"
+    },
+    "alerts": {
+      "title": "Viktige Varsler",
+      "subtitle": "Elementer som krever oppmerksomhet",
+      "assetsWithoutContracts": "utstyr uten vedlikeholdskontrakter",
+      "assetsWithoutContractsDesc": "Dette utstyret er ikke dekket av support. Vurder å legge dem til en kontrakt.",
+      "contractsExpiring": "kontrakter utløper i løpet av de neste 90 dagene",
+      "contractsExpiringDesc": "Gjennomgå og forny disse kontraktene for å opprettholde supportdekning.",
+      "systemHealth": "Systemhelse: God",
+      "systemHealthDesc": "aktive kontrakter som dekker {covered} utstyr."
+    }
+  },
+  "common": {
+    "loading": "Laster...",
+    "error": "Feil",
+    "success": "Suksess",
+    "save": "Lagre",
+    "cancel": "Avbryt",
+    "delete": "Slett",
+    "edit": "Rediger",
+    "add": "Legg til",
+    "search": "Søk",
+    "filter": "Filtrer",
+    "export": "Eksporter",
+    "import": "Importer",
+    "refresh": "Oppdater",
+    "close": "Lukk",
+    "confirm": "Bekreft",
+    "yes": "Ja",
+    "no": "Nei"
+  },
+  "user": {
+    "profile": "Profil",
+    "settings": "Innstillinger",
+    "logout": "Logg ut",
+    "language": "Språk"
+  },
+  "languages": {
+    "norwegian": "Norsk",
+    "english": "English"
+  },
+  "status": {
+    "ACTIVE": "AKTIV",
+    "SPARE": "RESERVE",
+    "DEFECT": "DEFEKT",
+    "RETIRED": "PENSJONERT"
+  },
+  "assets": {
+    "title": "Utstyr",
+    "addAsset": "Legg til Utstyr",
+    "serialNumber": "Serienummer",
+    "hostname": "Vertsnavn",
+    "location": "Plassering",
+    "status": "Status",
+    "model": "Modell",
+    "coverage": "Dekning",
+    "details": "Detaljer",
+    "overview": "Oversikt",
+    "basicInfo": "Grunnleggende Informasjon",
+    "assetTag": "Utstyrsnummer",
+    "purchaseDate": "Innkjøpsdato",
+    "purchasePrice": "Innkjøpspris",
+    "rackPosition": "Rack-posisjon",
+    "owner": "Eier",
+    "notes": "Notater",
+    "lastSync": "Sist synkronisert",
+    "lastAudit": "Sist auditert",
+    "associatedLicenses": "Tilknyttede Lisenser",
+    "associatedContracts": "Tilknyttede Kontrakter",
+    "auditHistory": "Audit-historikk",
+    "syncHistory": "Synkroniseringshistorikk",
+    "noLicenses": "Ingen lisenser tilknyttet",
+    "noContracts": "Ingen kontrakter tilknyttet",
+    "backToAssets": "Tilbake til Utstyr",
+    "editAsset": "Rediger Utstyr",
+    "deleteAsset": "Slett Utstyr"
+  },
+  "licenses": {
+    "title": "Lisenser",
+    "addLicense": "Legg til Lisens",
+    "type": "Type",
+    "expiryDate": "Utløpsdato",
+    "features": "Funksjoner"
+  },
+  "contracts": {
+    "title": "Kontrakter",
+    "addContract": "Legg til Kontrakt",
+    "startDate": "Startdato",
+    "endDate": "Sluttdato",
+    "serviceLevel": "Servicenivå",
+    "totalCost": "Total Kostnad (NOK)",
+    "annualCost": "Årlig Kostnad (NOK)"
+  },
+  "currency": {
+    "nok": "kr",
+    "symbol": "kr"
+  },
+  "reports": {
+    "title": "Rapporter",
+    "installBase": {
+      "title": "Install Base Rapport",
+      "description": "Fullstendig oversikt over alt utstyr i organisasjonen",
+      "generate": "Generer Rapport",
+      "totalAssets": "Totalt Utstyr",
+      "withContracts": "Med Kontrakter",
+      "withoutContracts": "Uten Kontrakter"
+    },
+    "coverageGap": {
+      "title": "Coverage Gap Rapport",
+      "description": "Utstyr som mangler vedlikeholdskontrakter",
+      "generate": "Generer Rapport",
+      "summary": "Sammendrag",
+      "totalValue": "Total Verdi",
+      "riskExposure": "Risikoeksponering"
+    },
+    "costAnalysis": {
+      "title": "Kostnadsanalyse",
+      "description": "Årlige kostnader for kontrakter og lisenser",
+      "generate": "Generer Rapport",
+      "contractCosts": "Kontraktskostnader",
+      "licenseCosts": "Lisenskostnader",
+      "totalAnnualCost": "Total Årlig Kostnad"
+    },
+    "export": {
+      "excel": "Eksporter til Excel",
+      "csv": "Eksporter til CSV",
+      "pdf": "Eksporter til PDF"
+    },
+    "filters": {
+      "location": "Plassering",
+      "status": "Status",
+      "model": "Modell",
+      "dateRange": "Datoperiode"
+    }
+  },
+  "models": {
+    "title": "Hardware Modeller",
+    "description": "Administrer hardware modellkatalog og EOL/EOS sporing",
+    "addModel": "Legg til Modell",
+    "editModel": "Rediger Modell",
+    "deleteModel": "Slett Modell",
+    "stats": {
+      "total": "Totale Modeller",
+      "active": "Aktive",
+      "eolReached": "EOL Nådd",
+      "eosReached": "EOS Nådd"
+    },
+    "form": {
+      "manufacturer": "Produsent",
+      "modelName": "Modellnavn",
+      "modelType": "Modelltype",
+      "description": "Beskrivelse",
+      "technicalSpecs": "Tekniske Spesifikasjoner",
+      "ports": "Porter/Grensesnitt",
+      "throughput": "Gjennomstrømning",
+      "memory": "Minne (RAM)",
+      "storage": "Lagring/Flash",
+      "powerSupply": "Strømforsyning",
+      "formFactor": "Formfaktor",
+      "eolDate": "EOL Dato",
+      "eosDate": "EOS Dato",
+      "eolAnnouncedAt": "EOL Kunngjort",
+      "isActive": "Aktiv modell"
+    },
+    "filter": {
+      "allTypes": "Alle Typer",
+      "router": "Router",
+      "switch": "Switch",
+      "firewall": "Firewall",
+      "wirelessAP": "Wireless AP",
+      "controller": "Kontroller",
+      "other": "Annet"
+    },
+    "deleteConfirm": {
+      "title": "Slett Modell",
+      "message": "Er du sikker på at du vil slette denne modellen? Denne handlingen kan ikke angres.",
+      "modelName": "Modellnavn",
+      "type": "Type"
+    }
+  }
+}

@@ -147,7 +147,7 @@ export default function LicensesPage() {
             <div>
               <div className="text-sm text-gray-600">Total Cost</div>
               <div className="text-2xl font-bold text-gray-900">
-                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `$${stats.totalCost.toLocaleString()}`}
+                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `${stats.totalCost.toLocaleString()} kr`}
               </div>
             </div>
           </div>
@@ -257,7 +257,7 @@ export default function LicensesPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      ${license.cost?.toLocaleString() || '-'}
+                      {license.cost?.toLocaleString() || '-'} kr
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={license.assets && license.assets.length > 0 ? 'success' : 'default'}>

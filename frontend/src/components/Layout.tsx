@@ -11,23 +11,48 @@ import {
   User,
   Menu,
   X,
+  CreditCard,
+  Settings,
+  ChevronDown,
+  ChevronRight,
+  TrendingUp,
 } from 'lucide-react'
-import { useState } from 'react'
-
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Assets', href: '/assets', icon: HardDrive },
-  { name: 'Licenses', href: '/licenses', icon: Key },
-  { name: 'Contracts', href: '/contracts', icon: FileText },
-  { name: 'Models', href: '/models', icon: Box },
-  { name: 'Netbox', href: '/netbox', icon: MapPin },
-  { name: 'Reports', href: '/reports', icon: BarChart3 },
-  { name: 'Sync', href: '/sync', icon: RefreshCw },
-]
+import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import LanguageSelector from './ui/LanguageSelector'
 
 export default function Layout() {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [adminExpanded, setAdminExpanded] = useState(false)
+  const { t } = useTranslation()
+
+  const navigation = [
+    { name: t('navigation.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+    { name: t('navigation.assets'), href: '/assets', icon: HardDrive },
+    { name: t('navigation.licenses'), href: '/licenses', icon: Key },
+    { name: t('navigation.contracts'), href: '/contracts', icon: FileText },
+    { name: 'Billing', href: '/billing', icon: CreditCard },
+    { name: 'Forecast', href: '/forecast', icon: TrendingUp },
+    { name: t('navigation.netbox'), href: '/netbox', icon: MapPin },
+    { name: t('navigation.reports'), href: '/reports', icon: BarChart3 },
+    { name: t('navigation.sync'), href: '/sync', icon: RefreshCw },
+  ]
+
+  const adminItems = [
+    { name: 'Contract Types', href: '/contract-types', icon: Settings },
+    { name: t('navigation.models'), href: '/models', icon: Box },
+  ]
+
+  // Check if any admin item is currently active
+  const isAdminActive = adminItems.some(item => location.pathname === item.href)
+
+  // Auto-expand admin menu if user is on an admin page
+  useEffect(() => {
+    if (isAdminActive) {
+      setAdminExpanded(true)
+    }
+  }, [isAdminActive])
 
   // Prototype mode - mock user
   const user = { firstName: 'Demo', lastName: 'User', role: 'ADMIN' }
@@ -65,6 +90,50 @@ export default function Layout() {
                   </Link>
                 )
               })}
+              
+              {/* Admin Section */}
+              <div className="space-y-1">
+                <button
+                  onClick={() => setAdminExpanded(!adminExpanded)}
+                  className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                    isAdminActive
+                      ? 'bg-primary-50 text-primary-600'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <Settings className="mr-3 h-5 w-5" />
+                  Admin
+                  {adminExpanded ? (
+                    <ChevronDown className="ml-auto h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="ml-auto h-4 w-4" />
+                  )}
+                </button>
+                
+                {adminExpanded && (
+                  <div className="pl-6 space-y-1">
+                    {adminItems.map((item) => {
+                      const Icon = item.icon
+                      const isActive = location.pathname === item.href
+                      return (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                            isActive
+                              ? 'bg-primary-50 text-primary-600'
+                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                          }`}
+                        >
+                          <Icon className="mr-3 h-4 w-4" />
+                          {item.name}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </nav>
           </div>
         </div>
@@ -95,6 +164,49 @@ export default function Layout() {
                 </Link>
               )
             })}
+            
+            {/* Admin Section */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setAdminExpanded(!adminExpanded)}
+                className={`w-full flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                  isAdminActive
+                    ? 'bg-primary-50 text-primary-600'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                }`}
+              >
+                <Settings className="mr-3 h-5 w-5" />
+                Admin
+                {adminExpanded ? (
+                  <ChevronDown className="ml-auto h-4 w-4" />
+                ) : (
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                )}
+              </button>
+              
+              {adminExpanded && (
+                <div className="pl-6 space-y-1">
+                  {adminItems.map((item) => {
+                    const Icon = item.icon
+                    const isActive = location.pathname === item.href
+                    return (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
+                          isActive
+                            ? 'bg-primary-50 text-primary-600'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                        }`}
+                      >
+                        <Icon className="mr-3 h-4 w-4" />
+                        {item.name}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
         </div>
       </div>
@@ -114,6 +226,7 @@ export default function Layout() {
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1" />
             <div className="flex items-center gap-x-4 lg:gap-x-6">
+              <LanguageSelector />
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-gray-500" />
                 <div className="hidden lg:block text-sm">

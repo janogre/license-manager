@@ -10,6 +10,17 @@ export type LicenseType = 'SUBSCRIPTION' | 'PERPETUAL' | 'FEATURE' | 'TRIAL'
 
 export type ContractType = 'JUNIPER_CARE' | 'PREMIUM_CARE' | 'THIRD_PARTY' | 'OTHER'
 
+// Contract Type Management (new dynamic system)
+export interface ContractTypeManagement {
+  id: string
+  name: string
+  description?: string
+  isActive: boolean
+  isDefault: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export interface HardwareModel {
   id: string
   manufacturer: string
@@ -126,6 +137,7 @@ export interface GetAssetsParams extends PaginationParams {
   search?: string
   status?: AssetStatus
   modelId?: string
+  location?: string
 }
 
 export interface GetAssetsResponse {
@@ -190,3 +202,27 @@ export interface DashboardStats {
   totalLicenses: number
   totalAnnualCost: number
 }
+
+export interface CreateHardwareModelRequest {
+  manufacturer: string
+  modelName: string
+  modelType: ModelType
+  description?: string
+  technicalSpecs?: any
+  eolDate?: string
+  eosDate?: string
+  eolAnnouncedAt?: string
+  isActive: boolean
+}
+
+export interface UpdateHardwareModelRequest extends Partial<CreateHardwareModelRequest> {}
+
+// Contract Type Management Input Types
+export interface CreateContractTypeInput {
+  name: string
+  description?: string
+  isActive?: boolean
+  isDefault?: boolean
+}
+
+export interface UpdateContractTypeInput extends Partial<CreateContractTypeInput> {}

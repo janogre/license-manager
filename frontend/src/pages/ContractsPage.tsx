@@ -172,7 +172,7 @@ export default function ContractsPage() {
             <div>
               <div className="text-sm text-gray-600">Annual Cost</div>
               <div className="text-2xl font-bold text-gray-900">
-                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `$${stats.totalCost.toLocaleString()}`}
+                {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : `${stats.totalCost.toLocaleString()} kr`}
               </div>
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function ContractsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
-                      ${contract.annualCost?.toLocaleString() || '-'}
+                      {contract.annualCost?.toLocaleString() || '-'} kr
                       {contract.autoRenewal && (
                         <div className="text-xs text-green-600 mt-1">Auto-renewal enabled</div>
                       )}

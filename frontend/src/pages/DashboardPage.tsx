@@ -4,48 +4,50 @@ import { Card, CardHeader } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { mockDashboardStats, mockAssetsByStatus, mockRecentSyncs } from '@/utils/mockData'
 import { format } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const stats = mockDashboardStats
   const assetsByStatus = mockAssetsByStatus
   const recentSyncs = mockRecentSyncs
 
   const statCards = [
     {
-      name: 'Total Assets',
+      name: t('dashboard.stats.totalAssets'),
       value: stats.totalAssets,
       icon: HardDrive,
       color: 'bg-blue-500',
-      trend: { value: '+2 this month', positive: true },
+      trend: { value: t('dashboard.stats.trend.thisMonth'), positive: true },
     },
     {
-      name: 'Assets Without Contracts',
+      name: t('dashboard.stats.assetsWithoutContracts'),
       value: stats.assetsWithoutContracts,
       icon: AlertTriangle,
       color: 'bg-red-500',
-      trend: { value: 'Needs attention', positive: false },
+      trend: { value: t('dashboard.stats.trend.needsAttention'), positive: false },
     },
     {
-      name: 'Active Contracts',
+      name: t('dashboard.stats.activeContracts'),
       value: stats.activeContracts,
       icon: FileText,
       color: 'bg-green-500',
     },
     {
-      name: 'Expiring Soon (90 days)',
+      name: t('dashboard.stats.expiringSoon'),
       value: stats.expiringContracts,
       icon: AlertTriangle,
       color: 'bg-orange-500',
     },
     {
-      name: 'Total Licenses',
+      name: t('dashboard.stats.totalLicenses'),
       value: stats.totalLicenses,
       icon: Key,
       color: 'bg-purple-500',
     },
     {
-      name: 'Annual Cost',
-      value: `$${stats.totalAnnualCost.toLocaleString()}`,
+      name: t('dashboard.stats.annualCost'),
+      value: `${stats.totalAnnualCost.toLocaleString()} kr`,
       icon: DollarSign,
       color: 'bg-indigo-500',
     },
@@ -55,13 +57,13 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Overview of your Juniper asset and license portfolio
+            {t('dashboard.subtitle')}
           </p>
         </div>
         <div className="text-sm text-gray-500">
-          Last updated: {format(new Date(), 'MMM d, yyyy HH:mm')}
+          {t('dashboard.lastUpdated')}: {format(new Date(), 'MMM d, yyyy HH:mm')}
         </div>
       </div>
 
@@ -76,7 +78,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Assets by Status */}
         <Card>
-          <CardHeader title="Assets by Status" subtitle="Current distribution" />
+          <CardHeader title={t('dashboard.assetsByStatus.title')} subtitle={t('dashboard.assetsByStatus.subtitle')} />
           <div className="space-y-4">
             {assetsByStatus.map((item) => {
               const total = assetsByStatus.reduce((sum, i) => sum + i.count, 0)
@@ -97,9 +99,9 @@ export default function DashboardPage() {
                             : 'default'
                         }
                       >
-                        {item.status}
+                        {t(`status.${item.status}`)}
                       </Badge>
-                      <span className="text-sm text-gray-600">{item.count} assets</span>
+                      <span className="text-sm text-gray-600">{item.count} {t('dashboard.assetsByStatus.assets')}</span>
                     </div>
                     <span className="text-sm font-semibold text-gray-900">{percentage}%</span>
                   </div>
@@ -118,8 +120,8 @@ export default function DashboardPage() {
         {/* Recent Sync Activity */}
         <Card>
           <CardHeader
-            title="Recent Sync Activity"
-            subtitle="Latest Observium synchronizations"
+            title={t('dashboard.recentSyncActivity.title')}
+            subtitle={t('dashboard.recentSyncActivity.subtitle')}
           />
           <div className="space-y-3">
             {recentSyncs.length > 0 ? (
@@ -143,7 +145,7 @@ export default function DashboardPage() {
               ))
             ) : (
               <p className="text-sm text-gray-500 text-center py-4">
-                No recent sync activity
+                {t('dashboard.recentSyncActivity.noActivity')}
               </p>
             )}
           </div>
@@ -152,17 +154,17 @@ export default function DashboardPage() {
 
       {/* Alerts and Warnings */}
       <Card>
-        <CardHeader title="Important Alerts" subtitle="Items requiring attention" />
+        <CardHeader title={t('dashboard.alerts.title')} subtitle={t('dashboard.alerts.subtitle')} />
         <div className="space-y-3">
           {stats.assetsWithoutContracts > 0 && (
             <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
               <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
               <div className="flex-1">
                 <div className="font-medium text-red-900">
-                  {stats.assetsWithoutContracts} assets without maintenance contracts
+                  {stats.assetsWithoutContracts} {t('dashboard.alerts.assetsWithoutContracts')}
                 </div>
                 <p className="text-sm text-red-700 mt-1">
-                  These assets are not covered by support. Consider adding them to a contract.
+                  {t('dashboard.alerts.assetsWithoutContractsDesc')}
                 </p>
               </div>
             </div>
@@ -173,10 +175,10 @@ export default function DashboardPage() {
               <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
               <div className="flex-1">
                 <div className="font-medium text-orange-900">
-                  {stats.expiringContracts} contracts expiring in the next 90 days
+                  {stats.expiringContracts} {t('dashboard.alerts.contractsExpiring')}
                 </div>
                 <p className="text-sm text-orange-700 mt-1">
-                  Review and renew these contracts to maintain support coverage.
+                  {t('dashboard.alerts.contractsExpiringDesc')}
                 </p>
               </div>
             </div>
@@ -185,9 +187,9 @@ export default function DashboardPage() {
           <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
             <TrendingUp className="h-5 w-5 text-green-600 mt-0.5" />
             <div className="flex-1">
-              <div className="font-medium text-green-900">System Health: Good</div>
+              <div className="font-medium text-green-900">{t('dashboard.alerts.systemHealth')}</div>
               <p className="text-sm text-green-700 mt-1">
-                {stats.activeContracts} active contracts covering {stats.totalAssets - stats.assetsWithoutContracts} assets.
+                {stats.activeContracts} {t('dashboard.alerts.systemHealthDesc', { covered: stats.totalAssets - stats.assetsWithoutContracts })}
               </p>
             </div>
           </div>

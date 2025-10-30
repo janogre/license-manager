@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Input, Select, Textarea } from '@/components/ui/Form'
+import { useTranslation } from 'react-i18next'
 import type { HardwareModel, ModelType } from '@/types'
 
 interface ModelFormProps {
@@ -31,6 +32,7 @@ export interface ModelFormData {
 }
 
 export default function ModelForm({ model, onSubmit, isSubmitting }: ModelFormProps) {
+  const { t } = useTranslation()
   const [formData, setFormData] = useState<ModelFormData>({
     manufacturer: model?.manufacturer || '',
     modelName: model?.modelName || '',
@@ -111,7 +113,7 @@ export default function ModelForm({ model, onSubmit, isSubmitting }: ModelFormPr
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <Input
-            label="Manufacturer"
+            label={t('models.form.manufacturer')}
             value={formData.manufacturer}
             onChange={(e) => handleChange('manufacturer', e.target.value)}
             placeholder="Juniper Networks"
@@ -119,7 +121,7 @@ export default function ModelForm({ model, onSubmit, isSubmitting }: ModelFormPr
             disabled={isSubmitting}
           />
           <Input
-            label="Model Name"
+            label={t('models.form.modelName')}
             value={formData.modelName}
             onChange={(e) => handleChange('modelName', e.target.value)}
             placeholder="MX240"
@@ -129,22 +131,22 @@ export default function ModelForm({ model, onSubmit, isSubmitting }: ModelFormPr
         </div>
 
         <Select
-          label="Model Type"
+          label={t('models.form.modelType')}
           value={formData.modelType}
           onChange={(e) => handleChange('modelType', e.target.value as ModelType)}
           options={[
-            { value: 'ROUTER', label: 'Router' },
-            { value: 'SWITCH', label: 'Switch' },
-            { value: 'FIREWALL', label: 'Firewall' },
-            { value: 'WIRELESS_AP', label: 'Wireless AP' },
-            { value: 'CONTROLLER', label: 'Controller' },
-            { value: 'OTHER', label: 'Other' },
+            { value: 'ROUTER', label: t('models.filter.router') },
+            { value: 'SWITCH', label: t('models.filter.switch') },
+            { value: 'FIREWALL', label: t('models.filter.firewall') },
+            { value: 'WIRELESS_AP', label: t('models.filter.wirelessAP') },
+            { value: 'CONTROLLER', label: t('models.filter.controller') },
+            { value: 'OTHER', label: t('models.filter.other') },
           ]}
           disabled={isSubmitting}
         />
 
         <Textarea
-          label="Description"
+          label={t('models.form.description')}
           value={formData.description}
           onChange={(e) => handleChange('description', e.target.value)}
           placeholder="High-performance router for enterprise edge..."
@@ -153,45 +155,45 @@ export default function ModelForm({ model, onSubmit, isSubmitting }: ModelFormPr
         />
 
         <div className="border-t pt-4">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">Technical Specifications</h3>
+          <h3 className="text-sm font-medium text-gray-900 mb-3">{t('models.form.technicalSpecs')}</h3>
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Ports/Interfaces"
+              label={t('models.form.ports')}
               value={formData.technicalSpecs?.ports || ''}
               onChange={(e) => handleSpecChange('ports', e.target.value)}
               placeholder="48 x 10GbE SFP+"
               disabled={isSubmitting}
             />
             <Input
-              label="Throughput"
+              label={t('models.form.throughput')}
               value={formData.technicalSpecs?.throughput || ''}
               onChange={(e) => handleSpecChange('throughput', e.target.value)}
               placeholder="480 Gbps"
               disabled={isSubmitting}
             />
             <Input
-              label="Memory (RAM)"
+              label={t('models.form.memory')}
               value={formData.technicalSpecs?.memory || ''}
               onChange={(e) => handleSpecChange('memory', e.target.value)}
               placeholder="16 GB"
               disabled={isSubmitting}
             />
             <Input
-              label="Storage/Flash"
+              label={t('models.form.storage')}
               value={formData.technicalSpecs?.storage || ''}
               onChange={(e) => handleSpecChange('storage', e.target.value)}
               placeholder="32 GB SSD"
               disabled={isSubmitting}
             />
             <Input
-              label="Power Supply"
+              label={t('models.form.powerSupply')}
               value={formData.technicalSpecs?.powerSupply || ''}
               onChange={(e) => handleSpecChange('powerSupply', e.target.value)}
               placeholder="AC 100-240V, DC -48V"
               disabled={isSubmitting}
             />
             <Input
-              label="Form Factor"
+              label={t('models.form.formFactor')}
               value={formData.technicalSpecs?.formFactor || ''}
               onChange={(e) => handleSpecChange('formFactor', e.target.value)}
               placeholder="1U Rackmount"
@@ -203,21 +205,21 @@ export default function ModelForm({ model, onSubmit, isSubmitting }: ModelFormPr
         <div className="grid grid-cols-3 gap-4">
           <Input
             type="date"
-            label="EOL Date"
+            label={t('models.form.eolDate')}
             value={formData.eolDate}
             onChange={(e) => handleChange('eolDate', e.target.value)}
             disabled={isSubmitting}
           />
           <Input
             type="date"
-            label="EOS Date"
+            label={t('models.form.eosDate')}
             value={formData.eosDate}
             onChange={(e) => handleChange('eosDate', e.target.value)}
             disabled={isSubmitting}
           />
           <Input
             type="date"
-            label="EOL Announced At"
+            label={t('models.form.eolAnnouncedAt')}
             value={formData.eolAnnouncedAt}
             onChange={(e) => handleChange('eolAnnouncedAt', e.target.value)}
             disabled={isSubmitting}
@@ -234,7 +236,7 @@ export default function ModelForm({ model, onSubmit, isSubmitting }: ModelFormPr
             disabled={isSubmitting}
           />
           <label htmlFor="isActive" className="text-sm text-gray-700">
-            Active model
+            {t('models.form.isActive')}
           </label>
         </div>
       </div>

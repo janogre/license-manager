@@ -8,9 +8,11 @@ import { Select } from '@/components/ui/Form'
 import { useModels, useCreateModel, useUpdateModel, useDeleteModel } from '@/hooks/useModels'
 import ModelForm, { type ModelFormData } from '@/components/ModelForm'
 import { format, differenceInDays } from 'date-fns'
+import { useTranslation } from 'react-i18next'
 import type { HardwareModel } from '@/types'
 
 export default function ModelsPage() {
+  const { t } = useTranslation()
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingModel, setEditingModel] = useState<HardwareModel | null>(null)
   const [deletingModel, setDeletingModel] = useState<HardwareModel | null>(null)
@@ -89,14 +91,14 @@ export default function ModelsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Hardware Models</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('models.title')}</h1>
           <p className="text-sm text-gray-600 mt-1">
-            Manage hardware model catalog and EOL/EOS tracking
+            {t('models.description')}
           </p>
         </div>
         <Button onClick={() => setShowAddModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Model
+          {t('models.addModel')}
         </Button>
       </div>
 
@@ -117,7 +119,7 @@ export default function ModelsPage() {
               <Server className="h-6 w-6 text-blue-600" />
             </div>
             <div>
-              <div className="text-sm text-gray-600">Total Models</div>
+              <div className="text-sm text-gray-600">{t('models.stats.total')}</div>
               <div className="text-2xl font-bold text-gray-900">
                 {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.total}
               </div>
@@ -131,7 +133,7 @@ export default function ModelsPage() {
               <Server className="h-6 w-6 text-green-600" />
             </div>
             <div>
-              <div className="text-sm text-gray-600">Active</div>
+              <div className="text-sm text-gray-600">{t('models.stats.active')}</div>
               <div className="text-2xl font-bold text-green-600">
                 {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.active}
               </div>
@@ -145,7 +147,7 @@ export default function ModelsPage() {
               <Calendar className="h-6 w-6 text-orange-600" />
             </div>
             <div>
-              <div className="text-sm text-gray-600">EOL Reached</div>
+              <div className="text-sm text-gray-600">{t('models.stats.eolReached')}</div>
               <div className="text-2xl font-bold text-orange-600">
                 {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.eolModels}
               </div>
@@ -159,7 +161,7 @@ export default function ModelsPage() {
               <AlertTriangle className="h-6 w-6 text-red-600" />
             </div>
             <div>
-              <div className="text-sm text-gray-600">EOS Reached</div>
+              <div className="text-sm text-gray-600">{t('models.stats.eosReached')}</div>
               <div className="text-2xl font-bold text-red-600">
                 {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.eosModels}
               </div>
@@ -176,13 +178,13 @@ export default function ModelsPage() {
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
             options={[
-              { value: 'all', label: 'All Types' },
-              { value: 'ROUTER', label: 'Router' },
-              { value: 'SWITCH', label: 'Switch' },
-              { value: 'FIREWALL', label: 'Firewall' },
-              { value: 'WIRELESS_AP', label: 'Wireless AP' },
-              { value: 'CONTROLLER', label: 'Controller' },
-              { value: 'OTHER', label: 'Other' },
+              { value: 'all', label: t('models.filter.allTypes') },
+              { value: 'ROUTER', label: t('models.filter.router') },
+              { value: 'SWITCH', label: t('models.filter.switch') },
+              { value: 'FIREWALL', label: t('models.filter.firewall') },
+              { value: 'WIRELESS_AP', label: t('models.filter.wirelessAP') },
+              { value: 'CONTROLLER', label: t('models.filter.controller') },
+              { value: 'OTHER', label: t('models.filter.other') },
             ]}
           />
         </div>
@@ -324,7 +326,7 @@ export default function ModelsPage() {
       <Modal
         isOpen={showAddModal}
         onClose={() => !createModel.isPending && setShowAddModal(false)}
-        title="Add New Model"
+        title={t('models.addModel')}
         size="lg"
         footer={
           <>
@@ -368,7 +370,7 @@ export default function ModelsPage() {
       <Modal
         isOpen={!!editingModel}
         onClose={() => !updateModel.isPending && setEditingModel(null)}
-        title="Edit Model"
+        title={t('models.editModel')}
         size="lg"
         footer={
           <>
@@ -420,7 +422,7 @@ export default function ModelsPage() {
       <Modal
         isOpen={!!deletingModel}
         onClose={() => !deleteModel.isPending && setDeletingModel(null)}
-        title="Delete Model"
+        title={t('models.deleteModel')}
         size="md"
         footer={
           <>
@@ -451,15 +453,15 @@ export default function ModelsPage() {
         {deletingModel && (
           <div className="space-y-4">
             <p className="text-sm text-gray-700">
-              Are you sure you want to delete this model? This action cannot be undone.
+              {t('models.deleteConfirm.message')}
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="text-gray-600">Model Name:</div>
+                <div className="text-gray-600">{t('models.deleteConfirm.modelName')}:</div>
                 <div className="font-medium text-gray-900">{deletingModel.modelName}</div>
-                <div className="text-gray-600">Manufacturer:</div>
+                <div className="text-gray-600">{t('models.form.manufacturer')}:</div>
                 <div className="font-medium text-gray-900">{deletingModel.manufacturer}</div>
-                <div className="text-gray-600">Type:</div>
+                <div className="text-gray-600">{t('models.deleteConfirm.type')}:</div>
                 <div className="font-medium text-gray-900">{deletingModel.modelType}</div>
               </div>
             </div>

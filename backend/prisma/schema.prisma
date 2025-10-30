@@ -94,6 +94,8 @@ model HardwareAsset {
   licenses           AssetLicenseMapping[]
   contracts          AssetContractMapping[]
   observiumSyncLogs  ObserviumSyncLog[]
+  billingMappings    AssetBillingMapping[]
+  invoiceLineItems   InvoiceLineItem[]
 
   @@index([modelId])
   @@index([serialNumber])
@@ -163,6 +165,7 @@ model MaintenanceContract {
 
   assets           AssetContractMapping[]
   alerts           ContractAlert[]
+  invoiceLineItems InvoiceLineItem[]
 
   @@map("maintenance_contracts")
 }
@@ -172,6 +175,19 @@ enum ContractType {
   PREMIUM_CARE
   THIRD_PARTY
   OTHER
+}
+
+// Contract Types - manageable through UI (will replace enum)
+model ContractTypeManagement {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("contract_types")
 }
 
 // ============================================
@@ -274,15 +290,140 @@ enum AlertStatus {
 }
 
 // ============================================
+// BILLING AND INVOICE MANAGEMENT
+// ============================================
+
+model BillingGroup {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g., "H1-2025", "H2-2025"
+  description String?
+  billingType BillingType @default(SEMI_ANNUAL)
+  periodStart DateTime
+  periodEnd   DateTime
+  isActive    Boolean  @default(true)
+  maxAssets   Int? // Optional limit on assets per group
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assetMappings AssetBillingMapping[]
+  invoiceRecords InvoiceRecord[]
+
+  @@map("billing_groups")
+}
+
+enum BillingType {
+  MONTHLY
+  QUARTERLY  
+  SEMI_ANNUAL
+  ANNUAL
+  CUSTOM
+}
+
+model AssetBillingMapping {
+  id             String    @id @default(uuid())
+  assetId        String
+  billingGroupId String
+  assignedDate   DateTime  @default(now())
+  effectiveFrom  DateTime  @default(now())
+  effectiveTo    DateTime?
+  assignedBy     String? // User who assigned
+  notes          String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  asset        HardwareAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  billingGroup BillingGroup  @relation(fields: [billingGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, billingGroupId, effectiveFrom])
+  @@index([assetId])
+  @@index([billingGroupId])
+  @@index([effectiveFrom])
+  @@map("asset_billing_mappings")
+}
+
+model InvoiceRecord {
+  id               String         @id @default(uuid())
+  invoiceNumber    String         @unique
+  billingGroupId   String
+  vendor           String         @default("Juniper Networks")
+  invoiceDate      DateTime
+  dueDate          DateTime?
+  totalAmount      Decimal?       @db.Decimal(12, 2)
+  currency         String         @default("NOK")
+  status           InvoiceStatus  @default(PENDING)
+  paymentDate      DateTime?
+  paidAmount       Decimal?       @db.Decimal(12, 2)
+  notes            String?
+  attachmentUrl    String? // Link to PDF/file
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  billingGroup BillingGroup @relation(fields: [billingGroupId], references: [id])
+  lineItems    InvoiceLineItem[]
+
+  @@index([billingGroupId])
+  @@index([invoiceDate])
+  @@index([status])
+  @@map("invoice_records")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model InvoiceLineItem {
+  id            String   @id @default(uuid())
+  invoiceId     String
+  assetId       String?
+  contractId    String?
+  description   String
+  quantity      Int      @default(1)
+  unitPrice     Decimal  @db.Decimal(10, 2)
+  totalPrice    Decimal  @db.Decimal(10, 2)
+  billingPeriod String? // e.g., "2025-H1"
+  createdAt     DateTime @default(now())
+
+  invoice  InvoiceRecord     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  asset    HardwareAsset?    @relation(fields: [assetId], references: [id], onDelete: SetNull)
+  contract MaintenanceContract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+
+  @@index([invoiceId])
+  @@index([assetId])
+  @@index([contractId])
+  @@map("invoice_line_items")
+}
+
+model BillingCycle {
+  id           String       @id @default(uuid())
+  name         String       @unique // e.g., "Semi-Annual 2025"
+  billingType  BillingType
+  frequency    Int          @default(2) // How many times per year
+  description  String?
+  isDefault    Boolean      @default(false)
+  autoAssign   Boolean      @default(true) // Auto-assign new assets
+  balanceThreshold Decimal? @db.Decimal(5, 2) // Max percentage difference between groups
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@map("billing_cycles")
+}
+
+// ============================================
 // AUDIT LOG
 // ============================================
 
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String?
-  entityType String // "asset", "license", "contract"
+  entityType String // "asset", "license", "contract", "billing"
   entityId   String
-  action     String // "created", "updated", "deleted"
+  action     String // "created", "updated", "deleted", "assigned", "unassigned"
   changes    Json? // What changed
   ipAddress  String?
   userAgent  String?

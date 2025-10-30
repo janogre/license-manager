@@ -12,7 +12,8 @@
       "Bash(docker-compose up:*)",
       "Bash(npm run prisma:seed:*)",
       "Bash(npm run dev:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx prisma migrate dev:*)"
     ],
     "deny": [],
     "ask": []

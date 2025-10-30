@@ -1,0 +1,217 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "assets": "Assets",
+    "licenses": "Licenses",
+    "contracts": "Contracts",
+    "models": "Models",
+    "netbox": "Netbox",
+    "reports": "Reports",
+    "sync": "Sync"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your Juniper asset and license portfolio",
+    "lastUpdated": "Last updated",
+    "stats": {
+      "totalAssets": "Total Assets",
+      "assetsWithoutContracts": "Assets Without Contracts",
+      "activeContracts": "Active Contracts",
+      "expiringSoon": "Expiring Soon (90 days)",
+      "totalLicenses": "Total Licenses",
+      "annualCost": "Annual Cost (NOK)",
+      "trend": {
+        "thisMonth": "+2 this month",
+        "needsAttention": "Needs attention"
+      }
+    },
+    "assetsByStatus": {
+      "title": "Assets by Status",
+      "subtitle": "Current distribution",
+      "assets": "assets"
+    },
+    "recentSyncActivity": {
+      "title": "Recent Sync Activity",
+      "subtitle": "Latest Observium synchronizations",
+      "noActivity": "No recent sync activity"
+    },
+    "alerts": {
+      "title": "Important Alerts",
+      "subtitle": "Items requiring attention",
+      "assetsWithoutContracts": "assets without maintenance contracts",
+      "assetsWithoutContractsDesc": "These assets are not covered by support. Consider adding them to a contract.",
+      "contractsExpiring": "contracts expiring in the next 90 days",
+      "contractsExpiringDesc": "Review and renew these contracts to maintain support coverage.",
+      "systemHealth": "System Health: Good",
+      "systemHealthDesc": "active contracts covering {covered} assets."
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "refresh": "Refresh",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "user": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "logout": "Logout",
+    "language": "Language"
+  },
+  "languages": {
+    "norwegian": "Norsk",
+    "english": "English"
+  },
+  "status": {
+    "ACTIVE": "ACTIVE",
+    "SPARE": "SPARE", 
+    "DEFECT": "DEFECT",
+    "RETIRED": "RETIRED"
+  },
+  "assets": {
+    "title": "Assets",
+    "addAsset": "Add Asset",
+    "serialNumber": "Serial Number",
+    "hostname": "Hostname",
+    "location": "Location",
+    "status": "Status",
+    "model": "Model",
+    "coverage": "Coverage",
+    "details": "Details",
+    "overview": "Overview",
+    "basicInfo": "Basic Information",
+    "assetTag": "Asset Tag",
+    "purchaseDate": "Purchase Date",
+    "purchasePrice": "Purchase Price",
+    "rackPosition": "Rack Position",
+    "owner": "Owner",
+    "notes": "Notes",
+    "lastSync": "Last Synchronized",
+    "lastAudit": "Last Audited",
+    "associatedLicenses": "Associated Licenses",
+    "associatedContracts": "Associated Contracts",
+    "auditHistory": "Audit History",
+    "syncHistory": "Sync History",
+    "noLicenses": "No licenses associated",
+    "noContracts": "No contracts associated",
+    "backToAssets": "Back to Assets",
+    "editAsset": "Edit Asset",
+    "deleteAsset": "Delete Asset"
+  },
+  "licenses": {
+    "title": "Licenses",
+    "addLicense": "Add License",
+    "type": "Type",
+    "expiryDate": "Expiry Date",
+    "features": "Features"
+  },
+  "contracts": {
+    "title": "Contracts",
+    "addContract": "Add Contract",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "serviceLevel": "Service Level",
+    "totalCost": "Total Cost (NOK)",
+    "annualCost": "Annual Cost (NOK)"
+  },
+  "currency": {
+    "nok": "NOK",
+    "symbol": "kr"
+  },
+  "reports": {
+    "title": "Reports",
+    "installBase": {
+      "title": "Install Base Report",
+      "description": "Complete overview of all equipment in the organization",
+      "generate": "Generate Report",
+      "totalAssets": "Total Assets",
+      "withContracts": "With Contracts",
+      "withoutContracts": "Without Contracts"
+    },
+    "coverageGap": {
+      "title": "Coverage Gap Report",
+      "description": "Equipment missing maintenance contracts",
+      "generate": "Generate Report",
+      "summary": "Summary",
+      "totalValue": "Total Value",
+      "riskExposure": "Risk Exposure"
+    },
+    "costAnalysis": {
+      "title": "Cost Analysis",
+      "description": "Annual costs for contracts and licenses",
+      "generate": "Generate Report",
+      "contractCosts": "Contract Costs",
+      "licenseCosts": "License Costs",
+      "totalAnnualCost": "Total Annual Cost"
+    },
+    "export": {
+      "excel": "Export to Excel",
+      "csv": "Export to CSV",
+      "pdf": "Export to PDF"
+    },
+    "filters": {
+      "location": "Location",
+      "status": "Status",
+      "model": "Model",
+      "dateRange": "Date Range"
+    }
+  },
+  "models": {
+    "title": "Hardware Models",
+    "description": "Manage hardware model catalog and EOL/EOS tracking",
+    "addModel": "Add Model",
+    "editModel": "Edit Model",
+    "deleteModel": "Delete Model",
+    "stats": {
+      "total": "Total Models",
+      "active": "Active",
+      "eolReached": "EOL Reached",
+      "eosReached": "EOS Reached"
+    },
+    "form": {
+      "manufacturer": "Manufacturer",
+      "modelName": "Model Name",
+      "modelType": "Model Type",
+      "description": "Description",
+      "technicalSpecs": "Technical Specifications",
+      "ports": "Ports/Interfaces",
+      "throughput": "Throughput",
+      "memory": "Memory (RAM)",
+      "storage": "Storage/Flash",
+      "powerSupply": "Power Supply",
+      "formFactor": "Form Factor",
+      "eolDate": "EOL Date",
+      "eosDate": "EOS Date",
+      "eolAnnouncedAt": "EOL Announced At",
+      "isActive": "Active model"
+    },
+    "filter": {
+      "allTypes": "All Types",
+      "router": "Router",
+      "switch": "Switch",
+      "firewall": "Firewall",
+      "wirelessAP": "Wireless AP",
+      "controller": "Controller",
+      "other": "Other"
+    },
+    "deleteConfirm": {
+      "title": "Delete Model",
+      "message": "Are you sure you want to delete this model? This action cannot be undone.",
+      "modelName": "Model Name",
+      "type": "Type"
+    }
+  }
+}

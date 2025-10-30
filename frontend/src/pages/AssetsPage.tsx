@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Input, Select } from '@/components/ui/Form'
 import { Modal } from '@/components/ui/Modal'
 import { useAssets, useCreateAsset, useUpdateAsset, useDeleteAsset } from '@/hooks/useAssets'
+import { useModels } from '@/hooks/useModels'
 import AssetForm from '@/components/AssetForm'
 import { format } from 'date-fns'
 import type { AssetStatus, CreateAssetInput, HardwareAsset } from '@/types'
@@ -13,10 +14,16 @@ import type { AssetStatus, CreateAssetInput, HardwareAsset } from '@/types'
 export default function AssetsPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<AssetStatus | 'all'>('all')
+  const [modelFilter, setModelFilter] = useState<string>('all')
+  const [locationFilter, setLocationFilter] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingAsset, setEditingAsset] = useState<HardwareAsset | null>(null)
   const [deletingAsset, setDeletingAsset] = useState<HardwareAsset | null>(null)
   const [page, setPage] = useState(1)
+
+  // Fetch models for the dropdown
+  const { data: modelsData } = useModels({ limit: 100 })
+  const models = modelsData?.models || []
 
   // Fetch assets from API
   const { data, isLoading, error } = useAssets({
@@ -24,6 +31,8 @@ export default function AssetsPage() {
     limit: 50,
     search: search || undefined,
     status: statusFilter !== 'all' ? statusFilter : undefined,
+    modelId: modelFilter !== 'all' ? modelFilter : undefined,
+    location: locationFilter || undefined,
   })
 
   // Mutations
@@ -125,8 +134,8 @@ export default function AssetsPage() {
 
       {/* Filters */}
       <div className="bg-white shadow rounded-lg p-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="lg:col-span-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
@@ -149,6 +158,26 @@ export default function AssetsPage() {
               { value: 'RETIRED', label: 'Retired' },
             ]}
           />
+          <Select
+            value={modelFilter}
+            onChange={(e) => setModelFilter(e.target.value)}
+            options={[
+              { value: 'all', label: 'All Models' },
+              ...models.map(model => ({
+                value: model.id,
+                label: model.modelName
+              }))
+            ]}
+          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Filter by location (e.g., Oslo DC1, Rack D-10)..."
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="pl-3 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
         </div>
       </div>
 
@@ -178,7 +207,7 @@ export default function AssetsPage() {
             {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
-              `$${stats.totalValue.toLocaleString()}`
+              `${stats.totalValue.toLocaleString()} kr`
             )}
           </div>
         </div>
