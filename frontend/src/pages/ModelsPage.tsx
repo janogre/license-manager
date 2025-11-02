@@ -19,7 +19,7 @@ export default function ModelsPage() {
   const [typeFilter, setTypeFilter] = useState('all')
 
   // Fetch models from API
-  const { data, isLoading, error } = useModels({ limit: 100 })
+  const { data, isLoading, error } = useModels({ limit: 1000 })
   const models = data?.models || []
 
   // Mutations

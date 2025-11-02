@@ -8,6 +8,7 @@ import {
   getExpiringContracts,
   assignContractToAsset,
   unassignContractFromAsset,
+  unassignContractFromLicense,
 } from '../controllers/contract.controller';
 import { authenticate, authorize } from '../middleware/auth.middleware';
 import { UserRole } from '@prisma/client';
@@ -24,5 +25,6 @@ router.put('/:id', authorize(UserRole.ADMIN, UserRole.EDITOR), updateContract);
 router.delete('/:id', authorize(UserRole.ADMIN), deleteContract);
 router.post('/:id/assign', authorize(UserRole.ADMIN, UserRole.EDITOR), assignContractToAsset);
 router.delete('/:id/unassign/:assetId', authorize(UserRole.ADMIN, UserRole.EDITOR), unassignContractFromAsset);
+router.delete('/:id/unassign-license/:licenseId', authorize(UserRole.ADMIN, UserRole.EDITOR), unassignContractFromLicense);
 
 export default router;

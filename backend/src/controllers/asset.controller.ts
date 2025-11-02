@@ -4,7 +4,7 @@ import { billingService } from '../services/billingService';
 
 export const getAssets = async (req: Request, res: Response) => {
   try {
-    const { page = 1, limit = 50, search, status, modelId, location } = req.query;
+    const { page = 1, limit = 50, search, status, modelId, locationId } = req.query;
 
     const where: any = {};
 
@@ -24,8 +24,8 @@ export const getAssets = async (req: Request, res: Response) => {
       where.modelId = modelId;
     }
 
-    if (location) {
-      where.location = { contains: location as string, mode: 'insensitive' };
+    if (locationId) {
+      where.locationId = locationId;
     }
 
     const [assets, total] = await Promise.all([
@@ -33,6 +33,7 @@ export const getAssets = async (req: Request, res: Response) => {
         where,
         include: {
           model: true,
+          location: true,
           licenses: {
             include: {
               license: true,
@@ -41,12 +42,6 @@ export const getAssets = async (req: Request, res: Response) => {
           contracts: {
             include: {
               contract: true,
-            },
-          },
-          billingMappings: {
-            where: { isActive: true },
-            include: {
-              billingGroup: true,
             },
           },
         },
@@ -79,6 +74,7 @@ export const getAssetById = async (req: Request, res: Response) => {
       where: { id },
       include: {
         model: true,
+        location: true,
         licenses: {
           include: {
             license: true,
@@ -87,12 +83,6 @@ export const getAssetById = async (req: Request, res: Response) => {
         contracts: {
           include: {
             contract: true,
-          },
-        },
-        billingMappings: {
-          where: { isActive: true },
-          include: {
-            billingGroup: true,
           },
         },
       },
@@ -117,7 +107,7 @@ export const createAsset = async (req: Request, res: Response) => {
       hostname,
       purchaseDate,
       purchasePrice,
-      location,
+      locationId,
       rackPosition,
       status,
       owner,
@@ -132,7 +122,7 @@ export const createAsset = async (req: Request, res: Response) => {
         hostname,
         purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
         purchasePrice,
-        location,
+        locationId,
         rackPosition,
         status,
         owner,
@@ -140,19 +130,21 @@ export const createAsset = async (req: Request, res: Response) => {
       },
       include: {
         model: true,
+        location: true,
       },
     });
 
-    // Auto-assign new asset to billing group if status is ACTIVE
-    if (status === 'ACTIVE' || (!status && asset.status === 'ACTIVE')) {
-      try {
-        await billingService.autoAssignAsset(asset.id);
-        console.log(`Auto-assigned asset ${asset.id} to billing group`);
-      } catch (autoAssignError) {
-        // Log the error but don't fail the asset creation
-        console.warn(`Failed to auto-assign asset ${asset.id} to billing group:`, autoAssignError);
-      }
-    }
+    // TODO: Auto-assign new asset to billing group if status is ACTIVE
+    // Commented out until billing feature is implemented in Prisma schema
+    // if (status === 'ACTIVE' || (!status && asset.status === 'ACTIVE')) {
+    //   try {
+    //     await billingService.autoAssignAsset(asset.id);
+    //     console.log(`Auto-assigned asset ${asset.id} to billing group`);
+    //   } catch (autoAssignError) {
+    //     // Log the error but don't fail the asset creation
+    //     console.warn(`Failed to auto-assign asset ${asset.id} to billing group:`, autoAssignError);
+    //   }
+    // }
 
     res.status(201).json({ asset });
   } catch (error: any) {
@@ -174,6 +166,7 @@ export const updateAsset = async (req: Request, res: Response) => {
       data,
       include: {
         model: true,
+        location: true,
       },
     });
 

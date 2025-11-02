@@ -12,8 +12,8 @@ export function Input({ label, error, className = '', ...props }: InputProps) {
         </label>
       )}
       <input
-        className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm ${
-          error ? 'border-red-300' : ''
+        className={`block w-full rounded-md border-2 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 sm:text-sm ${
+          error ? 'border-red-400' : 'border-gray-400'
         } ${className}`}
         {...props}
       />
@@ -37,8 +37,8 @@ export function Select({ label, error, options, className = '', ...props }: Sele
         </label>
       )}
       <select
-        className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm ${
-          error ? 'border-red-300' : ''
+        className={`block w-full rounded-md border-2 bg-white px-3 py-2 text-gray-900 shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 sm:text-sm ${
+          error ? 'border-red-400' : 'border-gray-400'
         } ${className}`}
         {...props}
       >
@@ -67,8 +67,8 @@ export function Textarea({ label, error, className = '', ...props }: TextareaPro
         </label>
       )}
       <textarea
-        className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm ${
-          error ? 'border-red-300' : ''
+        className={`block w-full rounded-md border-2 bg-white px-3 py-2 text-gray-900 placeholder-gray-400 shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:ring-offset-0 sm:text-sm ${
+          error ? 'border-red-400' : 'border-gray-400'
         } ${className}`}
         {...props}
       />

@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useMemo, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Search, Plus, Download, Filter, Loader2, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -7,32 +7,40 @@ import { Input, Select } from '@/components/ui/Form'
 import { Modal } from '@/components/ui/Modal'
 import { useAssets, useCreateAsset, useUpdateAsset, useDeleteAsset } from '@/hooks/useAssets'
 import { useModels } from '@/hooks/useModels'
+import { useLocations } from '@/hooks/useLocations'
 import AssetForm from '@/components/AssetForm'
 import { format } from 'date-fns'
 import type { AssetStatus, CreateAssetInput, HardwareAsset } from '@/types'
 
 export default function AssetsPage() {
+  const [searchParams] = useSearchParams()
+  const urlFilter = searchParams.get('filter')
+
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<AssetStatus | 'all'>('all')
   const [modelFilter, setModelFilter] = useState<string>('all')
-  const [locationFilter, setLocationFilter] = useState('')
+  const [locationFilter, setLocationFilter] = useState<string>('all')
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingAsset, setEditingAsset] = useState<HardwareAsset | null>(null)
   const [deletingAsset, setDeletingAsset] = useState<HardwareAsset | null>(null)
   const [page, setPage] = useState(1)
 
   // Fetch models for the dropdown
-  const { data: modelsData } = useModels({ limit: 100 })
+  const { data: modelsData } = useModels({ limit: 1000 })
   const models = modelsData?.models || []
+
+  // Fetch locations for the dropdown
+  const { data: locationsData } = useLocations({ limit: 1000 })
+  const locations = locationsData?.locations || []
 
   // Fetch assets from API
   const { data, isLoading, error } = useAssets({
     page,
-    limit: 50,
+    limit: 200,
     search: search || undefined,
     status: statusFilter !== 'all' ? statusFilter : undefined,
     modelId: modelFilter !== 'all' ? modelFilter : undefined,
-    location: locationFilter || undefined,
+    locationId: locationFilter !== 'all' ? locationFilter : undefined,
   })
 
   // Mutations
@@ -69,16 +77,24 @@ export default function AssetsPage() {
     }
   }
 
-  const assets = data?.assets || []
+  const allAssets = data?.assets || []
   const pagination = data?.pagination
+
+  // Filter assets based on URL parameter
+  const assets = useMemo(() => {
+    if (urlFilter === 'noContracts') {
+      return allAssets.filter((a) => !a.contracts || a.contracts.length === 0)
+    }
+    return allAssets
+  }, [allAssets, urlFilter])
 
   // Calculate stats from fetched data
   const stats = useMemo(() => {
     return {
       total: pagination?.total || 0,
-      active: assets.filter((a) => a.status === 'ACTIVE').length,
-      withoutContracts: assets.filter((a) => !a.contracts || a.contracts.length === 0).length,
-      totalValue: assets.reduce((sum, a) => {
+      active: allAssets.filter((a) => a.status === 'ACTIVE').length,
+      withoutContracts: allAssets.filter((a) => !a.contracts || a.contracts.length === 0).length,
+      totalValue: allAssets.reduce((sum, a) => {
         // Convert Decimal string to number
         const price = typeof a.purchasePrice === 'string'
           ? parseFloat(a.purchasePrice)
@@ -86,7 +102,7 @@ export default function AssetsPage() {
         return sum + price
       }, 0),
     }
-  }, [assets, pagination])
+  }, [allAssets, pagination])
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -119,6 +135,11 @@ export default function AssetsPage() {
           <p className="text-sm text-gray-600 mt-1">
             Manage your Juniper network equipment inventory
           </p>
+          {urlFilter === 'noContracts' && (
+            <div className="mt-2">
+              <Badge variant="warning">Showing only assets without contracts</Badge>
+            </div>
+          )}
         </div>
         <div className="flex gap-3">
           <Button variant="secondary" disabled>
@@ -169,41 +190,43 @@ export default function AssetsPage() {
               }))
             ]}
           />
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Filter by location (e.g., Oslo DC1, Rack D-10)..."
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              className="pl-3 pr-4 py-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
+          <Select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            options={[
+              { value: 'all', label: 'All Locations' },
+              ...(locations?.map((location) => ({
+                value: location.id,
+                label: location.name,
+              })) || []),
+            ]}
+          />
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white shadow rounded-lg p-4">
-          <div className="text-sm text-gray-600">Total Assets</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">
+        <div className="bg-gradient-to-br from-white to-gray-50 shadow-lg rounded-xl p-5 border border-gray-100 hover:shadow-xl transition-all">
+          <div className="text-sm font-medium text-gray-600 mb-2">Total Assets</div>
+          <div className="text-3xl font-bold text-primary-900 mt-1">
             {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.total}
           </div>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <div className="text-sm text-gray-600">Active</div>
-          <div className="text-2xl font-bold text-green-600 mt-1">
+        <div className="bg-gradient-to-br from-green-50 to-white shadow-lg rounded-xl p-5 border border-green-100 hover:shadow-xl transition-all">
+          <div className="text-sm font-medium text-green-700 mb-2">Active</div>
+          <div className="text-3xl font-bold text-green-700 mt-1">
             {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.active}
           </div>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <div className="text-sm text-gray-600">Without Contracts</div>
-          <div className="text-2xl font-bold text-red-600 mt-1">
+        <div className="bg-gradient-to-br from-red-50 to-white shadow-lg rounded-xl p-5 border border-red-100 hover:shadow-xl transition-all">
+          <div className="text-sm font-medium text-red-700 mb-2">Without Contracts</div>
+          <div className="text-3xl font-bold text-red-700 mt-1">
             {isLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : stats.withoutContracts}
           </div>
         </div>
-        <div className="bg-white shadow rounded-lg p-4">
-          <div className="text-sm text-gray-600">Total Value</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">
+        <div className="bg-gradient-to-br from-indigo-50 to-white shadow-lg rounded-xl p-5 border border-indigo-100 hover:shadow-xl transition-all">
+          <div className="text-sm font-medium text-indigo-700 mb-2">Total Value</div>
+          <div className="text-3xl font-bold text-indigo-700 mt-1">
             {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin" />
             ) : (
@@ -214,29 +237,29 @@ export default function AssetsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-gradient-to-br from-white to-gray-50 shadow-lg rounded-xl overflow-hidden border border-gray-100">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-gradient-to-r from-primary-700 to-primary-900 text-white">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                 Asset
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                 Model
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                 Location
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                 Coverage
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                 Purchase Date
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -275,7 +298,7 @@ export default function AssetsPage() {
                   <div className="text-xs text-gray-500">{asset.model?.modelType}</div>
                 </td>
                 <td className="px-6 py-4">
-                  <div className="text-sm text-gray-900">{asset.location || '-'}</div>
+                  <div className="text-sm text-gray-900">{asset.location?.name || '-'}</div>
                   {asset.rackPosition && (
                     <div className="text-xs text-gray-500">{asset.rackPosition}</div>
                   )}
@@ -297,7 +320,7 @@ export default function AssetsPage() {
                   <div className="flex items-center justify-end gap-2">
                     <button
                       onClick={() => setEditingAsset(asset)}
-                      className="text-blue-600 hover:text-blue-900"
+                      className="text-primary-600 hover:text-primary-900"
                       title="Edit asset"
                     >
                       <Edit className="h-4 w-4" />

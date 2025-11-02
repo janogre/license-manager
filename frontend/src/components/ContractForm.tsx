@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Input, Select, Textarea } from './ui/Form'
-import { useContractTypes } from '@/hooks/useContractTypes'
 import type { MaintenanceContract } from '@/types'
 
 interface ContractFormProps {
@@ -9,15 +8,19 @@ interface ContractFormProps {
   isSubmitting?: boolean
 }
 
-export default function ContractForm({ contract, onSubmit, isSubmitting }: ContractFormProps) {
-  // Fetch contract types from API
-  const { data: contractTypesData } = useContractTypes({ isActive: true })
-  const contractTypes = contractTypesData?.contractTypes || []
-  const defaultType = contractTypes.find(type => type.isDefault)
+// Contract type options
+const CONTRACT_TYPE_OPTIONS = [
+  { value: 'JUNIPER_CARE', label: 'Juniper Care' },
+  { value: 'PREMIUM_CARE', label: 'Premium Care' },
+  { value: 'THIRD_PARTY', label: 'Third Party' },
+  { value: 'NLOGIC', label: 'nLogic' },
+  { value: 'OTHER', label: 'Other' },
+]
 
+export default function ContractForm({ contract, onSubmit, isSubmitting }: ContractFormProps) {
   const [formData, setFormData] = useState<Partial<MaintenanceContract>>({
     contractNumber: contract?.contractNumber || '',
-    contractType: contract?.contractType || (defaultType?.name as any) || 'JUNIPER_CARE',
+    contractType: contract?.contractType || 'JUNIPER_CARE',
     vendor: contract?.vendor || 'Juniper Networks',
     startDate: contract?.startDate || '',
     endDate: contract?.endDate || '',
@@ -32,13 +35,6 @@ export default function ContractForm({ contract, onSubmit, isSubmitting }: Contr
     e.preventDefault()
     onSubmit(formData)
   }
-
-  // Update default contract type when data loads
-  useEffect(() => {
-    if (!contract && defaultType && !formData.contractType) {
-      setFormData(prev => ({ ...prev, contractType: defaultType.name as any }))
-    }
-  }, [defaultType, contract, formData.contractType])
 
   const handleChange = (field: keyof MaintenanceContract, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -59,10 +55,7 @@ export default function ContractForm({ contract, onSubmit, isSubmitting }: Contr
           label="Contract Type"
           value={formData.contractType}
           onChange={(e) => handleChange('contractType', e.target.value)}
-          options={contractTypes.map(type => ({
-            value: type.name,
-            label: type.name + (type.isDefault ? ' (Default)' : '')
-          }))}
+          options={CONTRACT_TYPE_OPTIONS}
           required
         />
         <Input

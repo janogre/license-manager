@@ -15,7 +15,7 @@ export default function LicensesPage() {
   const [deletingLicense, setDeletingLicense] = useState<License | null>(null)
 
   // Fetch licenses from API
-  const { data, isLoading, error } = useLicenses({ limit: 100 })
+  const { data, isLoading, error } = useLicenses({ limit: 1000 })
 
   // Mutations
   const createLicense = useCreateLicense()

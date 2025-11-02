@@ -35,6 +35,11 @@ export const getContracts = async (req: Request, res: Response) => {
               },
             },
           },
+          licenses: {
+            include: {
+              license: true,
+            },
+          },
         },
         skip: (Number(page) - 1) * Number(limit),
         take: Number(limit),
@@ -71,6 +76,11 @@ export const getContractById = async (req: Request, res: Response) => {
                 model: true,
               },
             },
+          },
+        },
+        licenses: {
+          include: {
+            license: true,
           },
         },
       },
@@ -200,6 +210,9 @@ export const assignContractToAsset = async (req: Request, res: Response) => {
       },
     });
 
+    // Recalculate total annual cost
+    await recalculateContractCost(id);
+
     res.status(201).json({ mapping });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to assign contract', details: error.message });
@@ -217,8 +230,70 @@ export const unassignContractFromAsset = async (req: Request, res: Response) => 
       },
     });
 
+    // Recalculate total annual cost
+    await recalculateContractCost(id);
+
     res.json({ message: 'Contract unassigned successfully' });
   } catch (error: any) {
     res.status(500).json({ error: 'Failed to unassign contract', details: error.message });
   }
 };
+
+export const unassignContractFromLicense = async (req: Request, res: Response) => {
+  try {
+    const { id, licenseId } = req.params;
+
+    await prisma.licenseContractMapping.deleteMany({
+      where: {
+        contractId: id,
+        licenseId,
+      },
+    });
+
+    // Recalculate total annual cost
+    await recalculateContractCost(id);
+
+    res.json({ message: 'License contract unassigned successfully' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Failed to unassign license contract', details: error.message });
+  }
+};
+
+/**
+ * Recalculate total annual cost for a contract based on all asset and license costs
+ */
+async function recalculateContractCost(contractId: string) {
+  const contract = await prisma.maintenanceContract.findUnique({
+    where: { id: contractId },
+    include: {
+      assets: {
+        select: { assetCost: true },
+      },
+      licenses: {
+        select: { licenseCost: true },
+      },
+    },
+  });
+
+  if (!contract) {
+    return;
+  }
+
+  // Sum up all asset costs
+  const totalAssetCost = contract.assets.reduce((sum, mapping) => {
+    return sum + (mapping.assetCost ? Number(mapping.assetCost) : 0);
+  }, 0);
+
+  // Sum up all license costs
+  const totalLicenseCost = contract.licenses.reduce((sum, mapping) => {
+    return sum + (mapping.licenseCost ? Number(mapping.licenseCost) : 0);
+  }, 0);
+
+  const totalCost = totalAssetCost + totalLicenseCost;
+
+  // Update contract with calculated total
+  await prisma.maintenanceContract.update({
+    where: { id: contractId },
+    data: { annualCost: totalCost },
+  });
+}

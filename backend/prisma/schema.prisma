@@ -68,6 +68,23 @@ enum ModelType {
 }
 
 // ============================================
+// LOCATIONS
+// ============================================
+
+model Location {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assets HardwareAsset[]
+
+  @@map("locations")
+}
+
+// ============================================
 // HARDWARE ASSETS (Physical Inventory)
 // ============================================
 
@@ -79,7 +96,7 @@ model HardwareAsset {
   hostname        String? // From Observium or manual
   purchaseDate    DateTime?
   purchasePrice   Decimal?     @db.Decimal(10, 2)
-  location        String?
+  locationId      String?
   rackPosition    String?
   status          AssetStatus  @default(ACTIVE)
   owner           String? // Department or person
@@ -91,6 +108,7 @@ model HardwareAsset {
   updatedAt       DateTime     @updatedAt
 
   model              HardwareModel           @relation(fields: [modelId], references: [id])
+  location           Location?               @relation(fields: [locationId], references: [id])
   licenses           AssetLicenseMapping[]
   contracts          AssetContractMapping[]
   observiumSyncLogs  ObserviumSyncLog[]
@@ -98,6 +116,7 @@ model HardwareAsset {
   invoiceLineItems   InvoiceLineItem[]
 
   @@index([modelId])
+  @@index([locationId])
   @@index([serialNumber])
   @@index([hostname])
   @@map("hardware_assets")
@@ -131,7 +150,8 @@ model License {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 
-  assets AssetLicenseMapping[]
+  assets    AssetLicenseMapping[]
+  contracts LicenseContractMapping[]
 
   @@map("licenses")
 }
@@ -148,22 +168,24 @@ enum LicenseType {
 // ============================================
 
 model MaintenanceContract {
-  id               String         @id @default(uuid())
-  contractNumber   String         @unique
+  id               String              @id @default(uuid())
+  contractNumber   String              @unique
   contractType     ContractType
-  vendor           String         @default("Juniper Networks")
+  category         ContractCategory    @default(HARDWARE) // Hardware or License
+  vendor           String              @default("Juniper Networks")
   startDate        DateTime
   endDate          DateTime
   renewalDate      DateTime?
-  annualCost       Decimal?       @db.Decimal(10, 2)
-  serviceLevel     String? // e.g., "24x7", "Business Hours"
-  autoRenewal      Boolean        @default(false)
+  annualCost       Decimal?            @db.Decimal(10, 2)
+  serviceLevel     String?             // e.g., "24x7", "Business Hours"
+  autoRenewal      Boolean             @default(false)
   notes            String?
-  isActive         Boolean        @default(true)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  isActive         Boolean             @default(true)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
 
   assets           AssetContractMapping[]
+  licenses         LicenseContractMapping[]
   alerts           ContractAlert[]
   invoiceLineItems InvoiceLineItem[]
 
@@ -174,7 +196,13 @@ enum ContractType {
   JUNIPER_CARE
   PREMIUM_CARE
   THIRD_PARTY
+  NLOGIC
   OTHER
+}
+
+enum ContractCategory {
+  HARDWARE
+  LICENSE
 }
 
 // Contract Types - manageable through UI (will replace enum)
@@ -218,6 +246,7 @@ model AssetContractMapping {
   contractId     String
   coverageStart  DateTime
   coverageEnd    DateTime
+  assetCost      Decimal?            @db.Decimal(10, 2) // Per-asset annual cost
   status         String              @default("active") // active, expired
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
@@ -229,6 +258,26 @@ model AssetContractMapping {
   @@index([assetId])
   @@index([contractId])
   @@map("asset_contract_mappings")
+}
+
+model LicenseContractMapping {
+  id             String              @id @default(uuid())
+  licenseId      String
+  contractId     String
+  coverageStart  DateTime
+  coverageEnd    DateTime
+  licenseCost    Decimal?            @db.Decimal(10, 2) // Per-license annual cost
+  status         String              @default("active") // active, expired
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  license  License              @relation(fields: [licenseId], references: [id], onDelete: Cascade)
+  contract MaintenanceContract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([licenseId, contractId])
+  @@index([licenseId])
+  @@index([contractId])
+  @@map("license_contract_mappings")
 }
 
 // ============================================

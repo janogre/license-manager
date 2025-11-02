@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Input, Select, Textarea } from './ui/Form'
 import { useAllModels } from '@/hooks/useModels'
+import { useLocations } from '@/hooks/useLocations'
 import type { CreateAssetInput, HardwareAsset } from '@/types'
 import { Loader2 } from 'lucide-react'
 
@@ -12,6 +13,8 @@ interface AssetFormProps {
 
 export default function AssetForm({ asset, onSubmit, isSubmitting }: AssetFormProps) {
   const { data: models, isLoading: modelsLoading } = useAllModels()
+  const { data: locationsData, isLoading: locationsLoading } = useLocations({ limit: 1000 })
+  const locations = locationsData?.locations || []
 
   const [formData, setFormData] = useState<CreateAssetInput>({
     modelId: asset?.modelId || '',
@@ -20,7 +23,7 @@ export default function AssetForm({ asset, onSubmit, isSubmitting }: AssetFormPr
     hostname: asset?.hostname || '',
     purchaseDate: asset?.purchaseDate || '',
     purchasePrice: asset?.purchasePrice || undefined,
-    location: asset?.location || '',
+    locationId: asset?.locationId || '',
     rackPosition: asset?.rackPosition || '',
     status: asset?.status || 'ACTIVE',
     owner: asset?.owner || '',
@@ -36,11 +39,11 @@ export default function AssetForm({ asset, onSubmit, isSubmitting }: AssetFormPr
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  if (modelsLoading) {
+  if (modelsLoading || locationsLoading) {
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-600">Loading models...</span>
+        <span className="ml-2 text-gray-600">Loading form data...</span>
       </div>
     )
   }
@@ -85,11 +88,17 @@ export default function AssetForm({ asset, onSubmit, isSubmitting }: AssetFormPr
       />
 
       <div className="grid grid-cols-2 gap-4">
-        <Input
+        <Select
           label="Location"
-          placeholder="Oslo DC1, Rack A-12"
-          value={formData.location}
-          onChange={(e) => handleChange('location', e.target.value)}
+          value={formData.locationId}
+          onChange={(e) => handleChange('locationId', e.target.value)}
+          options={[
+            { value: '', label: 'Select a location' },
+            ...(locations?.map((location) => ({
+              value: location.id,
+              label: location.name,
+            })) || []),
+          ]}
         />
         <Input
           label="Rack Position"

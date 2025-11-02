@@ -21,6 +21,18 @@ export interface ContractTypeManagement {
   updatedAt: string
 }
 
+export interface Location {
+  id: string
+  name: string
+  description?: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+  _count?: {
+    assets: number
+  }
+}
+
 export interface HardwareModel {
   id: string
   manufacturer: string
@@ -79,7 +91,8 @@ export interface HardwareAsset {
   hostname?: string
   purchaseDate?: string
   purchasePrice?: number
-  location?: string
+  locationId?: string
+  location?: Location
   rackPosition?: string
   status: AssetStatus
   owner?: string
@@ -137,7 +150,7 @@ export interface GetAssetsParams extends PaginationParams {
   search?: string
   status?: AssetStatus
   modelId?: string
-  location?: string
+  locationId?: string
 }
 
 export interface GetAssetsResponse {
@@ -152,7 +165,7 @@ export interface CreateAssetInput {
   hostname?: string
   purchaseDate?: string
   purchasePrice?: number
-  location?: string
+  locationId?: string
   rackPosition?: string
   status: AssetStatus
   owner?: string
@@ -191,6 +204,15 @@ export interface GetModelsParams extends PaginationParams {
 
 export interface GetModelsResponse {
   models: HardwareModel[]
+  pagination: PaginationResponse
+}
+
+export interface GetLocationsParams extends PaginationParams {
+  search?: string
+}
+
+export interface GetLocationsResponse {
+  locations: Location[]
   pagination: PaginationResponse
 }
 
