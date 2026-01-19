@@ -344,24 +344,43 @@ export default function AssetDetailPage() {
           />
           <div className="space-y-3">
             {asset.contracts && asset.contracts.length > 0 ? (
-              asset.contracts.map((mapping) => (
-                <div 
-                  key={mapping.id} 
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              asset.contracts.map((mapping: any) => (
+                <Link
+                  key={mapping.id}
+                  to={`/contracts?search=${encodeURIComponent(mapping.contract?.contractNumber || '')}`}
+                  className="block p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <div className="flex items-center">
-                    <FileText className="h-4 w-4 text-green-600 mr-3" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <FileText className="h-4 w-4 text-green-600 mr-3" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 hover:text-blue-600">
+                          {mapping.contract?.contractNumber}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {mapping.contract?.contractType}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="success">Active</Badge>
+                  </div>
+                  <div className="mt-2 ml-7 grid grid-cols-2 gap-2 text-xs">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {mapping.contract?.contractNumber}
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        {mapping.contract?.contractType}
-                      </p>
+                      <span className="text-gray-500">Periode:</span>
+                      <span className="ml-1 text-gray-700">
+                        {mapping.coverageStart ? format(new Date(mapping.coverageStart), 'dd.MM.yyyy') : '-'}
+                        {' - '}
+                        {mapping.coverageEnd ? format(new Date(mapping.coverageEnd), 'dd.MM.yyyy') : '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Årskostnad:</span>
+                      <span className="ml-1 text-gray-700 font-medium">
+                        {mapping.assetCost ? `${Number(mapping.assetCost).toLocaleString('nb-NO')} kr` : '-'}
+                      </span>
                     </div>
                   </div>
-                  <Badge variant="success">Active</Badge>
-                </div>
+                </Link>
               ))
             ) : (
               <div className="text-center py-4">

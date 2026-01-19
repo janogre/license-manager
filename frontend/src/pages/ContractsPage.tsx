@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Plus, FileText, Calendar, DollarSign, AlertTriangle, Loader2, Edit, Trash2, ChevronDown, ChevronRight, X } from 'lucide-react'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
@@ -16,6 +17,7 @@ export default function ContractsPage() {
   const [searchParams] = useSearchParams()
   const urlStatus = searchParams.get('status')
   const urlFilter = searchParams.get('filter')
+  const urlSearch = searchParams.get('search')
 
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingContract, setEditingContract] = useState<MaintenanceContract | null>(null)
@@ -111,8 +113,36 @@ export default function ContractsPage() {
     }
   }, [contracts, activeContracts, expiringContracts])
 
+  // Data for pie chart - group by contract number and sum costs
+  const pieChartData = useMemo(() => {
+    const contractCosts = activeContracts.map(c => ({
+      name: c.contractNumber,
+      value: typeof c.annualCost === 'string' ? parseFloat(c.annualCost) : (c.annualCost || 0),
+      type: c.contractType,
+      assetCount: c.assets?.length || 0,
+      licenseCount: (c as any).licenses?.length || 0
+    }))
+
+    // Sort by value descending and take top entries
+    return contractCosts
+      .filter(c => c.value > 0)
+      .sort((a, b) => b.value - a.value)
+  }, [activeContracts])
+
+  const PIE_COLORS = [
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+    '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1',
+    '#14b8a6', '#a855f7', '#eab308', '#22c55e', '#0ea5e9'
+  ]
+
   const filteredContracts = useMemo(() => {
     return contracts.filter((contract) => {
+      // Search filter (from URL)
+      if (urlSearch) {
+        const searchLower = urlSearch.toLowerCase()
+        if (!contract.contractNumber.toLowerCase().includes(searchLower)) return false
+      }
+
       // URL parameter filters (from dashboard)
       if (urlStatus === 'active' && !contract.isActive) return false
       if (urlFilter === 'expiring') {
@@ -135,7 +165,7 @@ export default function ContractsPage() {
       }
       return true
     })
-  }, [contracts, statusFilter, categoryFilter, urlStatus, urlFilter])
+  }, [contracts, statusFilter, categoryFilter, urlStatus, urlFilter, urlSearch])
 
   const toggleContractExpansion = (contractId: string) => {
     const newExpanded = new Set(expandedContracts)
@@ -178,10 +208,16 @@ export default function ContractsPage() {
           <p className="text-sm text-gray-600 mt-1">
             Manage Juniper support and maintenance agreements
           </p>
-          {(urlStatus === 'active' || urlFilter === 'expiring') && (
-            <div className="mt-2 flex gap-2">
+          {(urlStatus === 'active' || urlFilter === 'expiring' || urlSearch) && (
+            <div className="mt-2 flex gap-2 flex-wrap">
               {urlStatus === 'active' && <Badge variant="success">Showing only active contracts</Badge>}
               {urlFilter === 'expiring' && <Badge variant="warning">Showing contracts expiring within 90 days</Badge>}
+              {urlSearch && (
+                <Badge variant="info" className="flex items-center gap-1">
+                  Søker: "{urlSearch}"
+                  <a href="/contracts" className="ml-1 hover:text-blue-800">✕</a>
+                </Badge>
+              )}
             </div>
           )}
         </div>
@@ -246,6 +282,53 @@ export default function ContractsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Pie Chart - Cost Distribution */}
+      {pieChartData.length > 0 && (
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Kostnadsfordeling per kontrakt</h3>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieChartData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={120}
+                  dataKey="value"
+                >
+                  {pieChartData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload
+                      const total = pieChartData.reduce((sum, d) => sum + d.value, 0)
+                      const percent = ((data.value / total) * 100).toFixed(1)
+                      return (
+                        <div className="bg-white border border-gray-200 shadow-lg rounded-lg p-3">
+                          <div className="font-semibold text-gray-900">{data.name}</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            {Number(data.value).toLocaleString('nb-NO')} kr ({percent}%)
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            {data.assetCount > 0 && <span>{data.assetCount} hardware</span>}
+                            {data.assetCount > 0 && data.licenseCount > 0 && <span>, </span>}
+                            {data.licenseCount > 0 && <span>{data.licenseCount} lisenser</span>}
+                          </div>
+                        </div>
+                      )
+                    }
+                    return null
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
 
       {/* Expiring Warning */}
       {expiringContracts.length > 0 && (
@@ -342,9 +425,9 @@ export default function ContractsPage() {
                 const isExpanded = expandedContracts.has(contract.id)
 
                 return (
-                  <>
+                  <React.Fragment key={contract.id}>
                     {/* Main contract row */}
-                    <tr key={contract.id} className="hover:bg-gray-50">
+                    <tr className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           {(contract.assets.length > 0 || ((contract as any).licenses && (contract as any).licenses.length > 0)) && (
@@ -389,7 +472,7 @@ export default function ContractsPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-900">
-                        {contract.annualCost?.toLocaleString() || '-'} kr
+                        {contract.annualCost ? Number(contract.annualCost).toLocaleString() : '-'} kr
                         {contract.autoRenewal && (
                           <div className="text-xs text-green-600 mt-1">Auto-renewal enabled</div>
                         )}
@@ -565,7 +648,7 @@ export default function ContractsPage() {
                         </tr>
                       )
                     })}
-                  </>
+                  </React.Fragment>
                 )
               })}
             </tbody>
